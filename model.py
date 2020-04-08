@@ -13,25 +13,28 @@ class SchellingAgent(Agent):
         self.behave = behave
         self.behave_2 = behave_2
 
-    # define the step function
-    def step(self):
-        if self.type == 3:
-            self.model.distruptive += 1
-
-        '''
-        noOfNeigh = 0
+    def neighbour(self):
+        neighbourCount = 0
         red = 0
         green = 0
         yellow = 0
         for neighbor in self.model.grid.neighbor_iter(self.pos):
-            noOfNeigh += 1
+            neighbourCount += 1
             if neighbor.type == 3:
                 red += 1
             elif neighbor.type == 2:
                 yellow += 1
             else:
                 green += 1
-                '''
+
+        return neighbourCount, red, yellow, green
+
+    # define the step function
+    def step(self):
+        if self.type == 3:
+            self.model.distruptive += 1
+        count,red,yellow,green = self.neighbour()
+
         agent_state = self.random.randrange(6)
         if self.model.Inattentiveness == 1 and self.model.quality > agent_state and self.behave < 5:
             if self.type <= 2:
@@ -56,41 +59,32 @@ class SchellingAgent(Agent):
             self.type = 2
             self.model.learning -= 1
 
-        if self.model.hyper_Impulsive == 1 and self.model.control < agent_state and self.behave_2 > 5 and self.type == 2:
+        if self.model.hyper_Impulsive == 1 and self.model.control < agent_state and self.behave_2 > 5:
             self.type = 3
             self.model.distruptive += 1
-        if self.model.hyper_Impulsive == 1 and self.model.control > agent_state and self.behave_2 < 5 and self.type == 2:
-            self.type = 1
-            self.model.learning += 1
-        if self.model.hyper_Impulsive == 0 and self.model.control < agent_state and self.type == 2:
+        if self.model.hyper_Impulsive == 1 and self.model.control > agent_state and self.behave_2 < 5 :
+            if self.type <= 2:
+             self.type = 1
+             self.model.learning += 1
+            else:
+                self.type=3
+        if self.model.hyper_Impulsive == 0 and self.model.control < agent_state:
             self.type = 3
             self.model.distruptive += 1
         if self.model.control > agent_state and self.type == 3:
             self.type = 2
             self.model.distruptive -= 1
-        if  self.neighbour.red > 2 and self.type == 1:
+        if  red > 2 and self.type == 1:
             self.type = 2
             if self.model.learning > 0:
                 self.model.learning -= 1
-        if  self.neighbour.red > 5 and self.type == 2:
+        if  red > 5 and self.type == 2:
             self.type = 3
             self.model.distruptive += 1
+        if green > 5 and self.type == 2:
+            self.type = 1
+            self.model.learning += 1
 
-    def neighbour(self):
-        neighbourCount = 0
-        red = 0
-        green = 0
-        yellow = 0
-        for neighbor in self.model.grid.neighbor_iter(self.pos):
-            neighbourCount += 1
-            if neighbor.type == 3:
-                red += 1
-            elif neighbor.type == 2:
-                yellow += 1
-            else:
-                green += 1
-
-        #return neighbourCount, red, yellow, green
 
 
 class Schelling(Model):
@@ -128,8 +122,18 @@ class Schelling(Model):
         for cell in self.grid.coord_iter():
             x = cell[1]
             y = cell[2]
-            agent_inattentiveness = self.random.randrange(10)
-            agent_hyper_Impulsive = self.random.randrange(10)
+            #Control radome behavior of agents
+            if Inattentiveness ==1:
+                Inattentiveness_list = [1,2,3,4] * 30 + [5,6,7,8,9] * 70
+            else:
+                Inattentiveness_list = [1,2,3,4] * 70 + [5,6,7,8,9] * 30
+            agent_inattentiveness = self.random.choice(Inattentiveness_list)
+            if hyper_Impulsive ==1:
+                hyper_Impulsive_list = [1,2,3,4] * 30 + [5,6,7,8,9] * 70
+            else:
+                hyper_Impulsive_list = [1,2,3,4] * 70 + [5,6,7,8,9] * 30
+            agent_hyper_Impulsive = self.random.choice(hyper_Impulsive_list)
+            #agent_hyper_Impulsive = self.random.randrange(10)
             agent_type = 2
             agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive)
             self.grid.position_agent(agent, (x, y))
