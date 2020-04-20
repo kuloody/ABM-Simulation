@@ -124,9 +124,9 @@ class Schelling(Model):
             y = cell[2]
             #Control radome behavior of agents
             if Inattentiveness ==1:
-                Inattentiveness_list = [1,2,3,4] * 30 + [5,6,7,8,9] * 70
+                Inattentiveness_list = [1,2,3,4] * 40 + [5,6,7,8,9] * 70
             else:
-                Inattentiveness_list = [1,2,3,4] * 70 + [5,6,7,8,9] * 30
+                Inattentiveness_list = [1,2,3,4] * 70 + [5,6,7,8,9] * 40
             agent_inattentiveness = self.random.choice(Inattentiveness_list)
             if hyper_Impulsive ==1:
                 hyper_Impulsive_list = [1,2,3,4] * 30 + [5,6,7,8,9] * 70
