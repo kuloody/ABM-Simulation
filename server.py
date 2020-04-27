@@ -24,14 +24,15 @@ def schelling_draw(agent):
     if agent is None:
         return
     portrayal = {"Shape": "circle", "r": 0.5, "Filled": "true", "Layer": 0}
+    type = agent.get_type()
 
-    if agent.type == 3:
+    if type == 3:
         portrayal["Color"] = ["red", "red"]
         portrayal["stroke_color"] = "#00FF00"
-    if agent.type == 2:
+    if type == 2:
         portrayal["Color"] = ["yellow", "yellow"]
         portrayal["stroke_color"] = "#00FF00"
-    if agent.type == 1:
+    if type == 1:
         portrayal["Color"] = ["green", "green"]
         portrayal["stroke_color"] = "#000000"
     return portrayal
