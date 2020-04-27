@@ -38,9 +38,10 @@ class SchellingAgent(Agent):
         if self.type == 3:
             self.model.distruptive += 1
 
-        self.redStateCange()
+
         self.yellowStateCange()
         self.greenStateCange()
+        self.redStateCange()
         self.changeState()
         print('agent type',self.type)
        # self.neighbourState()
@@ -81,6 +82,24 @@ class SchellingAgent(Agent):
             self.redState =+1
             self.yellowState = 0
             self.greenState = 0
+        Pturn_red = red/count
+       # Pturn_green = self.model.control + self.model.quality
+        Pturn_green = green/count
+        Pturn_yellow = yellow/count
+
+        if self.type == 3:
+              Pturn_red += 0.2
+        elif self.type == 2:
+              Pturn_yellow += 0.2
+        else:
+                 Pturn_green+= 0.2
+        colour = max(Pturn_red,Pturn_green,Pturn_yellow)
+        if Pturn_yellow == colour:
+            self.type = 3
+            self.redState =+ 1
+            self.yellowState = 0
+            self.greenState = 0
+            print('here red color')
 
     def yellowStateCange(self):
 
@@ -193,6 +212,7 @@ class SchellingAgent(Agent):
             self.yellowState = 0
             self.greenState =+ 1
             print('here green color')
+            print('green state counter',self.greenState)
     def neighbourState(self):
         count, red, yellow, green = self.neighbour()
         # calculate the probability of each colour
