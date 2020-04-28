@@ -14,7 +14,7 @@ class HappyElement(TextElement):
         pass
 
     def render(self, model):
-        return "Learning agents: " + str(model.learning)+" Distruptive agents: " + str(model.distruptive)+"red state counter"
+        return "Learning agents: " + str(model.learning)+" Distruptive agents: " + str(model.distruptive)
 
 
 def schelling_draw(agent):

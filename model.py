@@ -6,12 +6,13 @@ from mesa.datacollection import DataCollector
 
 class SchellingAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, behave, behave_2):
+    def __init__(self, pos, model, agent_type, behave, behave_2,g):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
         self.behave = behave
         self.behave_2 = behave_2
+        self.greenState = g
         self.agent_state = self.random.randrange(6)
        # self.redState = 0
        # self.yellowState = 0
@@ -88,12 +89,12 @@ class SchellingAgent(Agent):
         Pturn_yellow = yellow/count
 
         if self.type == 3:
-              Pturn_red += 0.2
+            Pturn_red += 0.2
         elif self.type == 2:
-              Pturn_yellow += 0.2
+            Pturn_yellow += 0.2
         else:
-                 Pturn_green+= 0.2
-        colour = max(Pturn_red,Pturn_green,Pturn_yellow)
+            Pturn_green += 0.2
+        colour = max(Pturn_red, Pturn_green, Pturn_yellow)
         if Pturn_yellow == colour:
             self.type = 3
             self.model.redState =+ 1
@@ -137,18 +138,18 @@ class SchellingAgent(Agent):
             self.model.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
-        Pturn_red = red/count
-       # Pturn_green = self.model.control + self.model.quality
-        Pturn_green = green/count
-        Pturn_yellow = yellow/count
+        Pturn_red = red / count
+        # Pturn_green = self.model.control + self.model.quality
+        Pturn_green = green / count
+        Pturn_yellow = yellow / count
 
         if self.type == 3:
-              Pturn_red += 0.2
+            Pturn_red += 0.2
         elif self.type == 2:
-              Pturn_yellow += 0.2
+            Pturn_yellow += 0.2
         else:
-                 Pturn_green+= 0.2
-        colour = max(Pturn_red,Pturn_green,Pturn_yellow)
+            Pturn_green += 0.2
+        colour = max(Pturn_red, Pturn_green, Pturn_yellow)
         if Pturn_yellow == colour:
             self.type = 2
             self.model.redState = 0
@@ -193,18 +194,18 @@ class SchellingAgent(Agent):
         if green > 5 and self.type == 2:
             self.type = 1
             self.model.learning += 1
-        Pturn_red = red/count
-       # Pturn_green = self.model.control + self.model.quality
-        Pturn_green = green/count
-        Pturn_yellow = yellow/count
+        Pturn_red = red / count
+        # Pturn_green = self.model.control + self.model.quality
+        Pturn_green = green / count
+        Pturn_yellow = yellow / count
 
         if self.type == 3:
-              Pturn_red += 0.2
+            Pturn_red += 0.2
         elif self.type == 2:
-              Pturn_yellow += 0.2
+            Pturn_yellow += 0.2
         else:
-                 Pturn_green+= 0.2
-        colour = max(Pturn_red,Pturn_green,Pturn_yellow)
+            Pturn_green += 0.2
+        colour = max(Pturn_red, Pturn_green, Pturn_yellow)
         if Pturn_green == colour:
             self.type = 1
             self.model.learning += 1
@@ -216,18 +217,18 @@ class SchellingAgent(Agent):
     def neighbourState(self):
         count, red, yellow, green = self.neighbour()
         # calculate the probability of each colour
-        Pturn_red = red/count
-       # Pturn_green = self.model.control + self.model.quality
-        Pturn_green = green/count
-        Pturn_yellow = yellow/count
+        Pturn_red = red / count
+        # Pturn_green = self.model.control + self.model.quality
+        Pturn_green = green / count
+        Pturn_yellow = yellow / count
 
         if self.type == 3:
-              Pturn_red += 0.2
+            Pturn_red += 0.2
         elif self.type == 2:
-              Pturn_yellow += 0.2
+            Pturn_yellow += 0.2
         else:
-                 Pturn_green+= 0.2
-        colour = max(Pturn_red,Pturn_green,Pturn_yellow)
+            Pturn_green += 0.2
+        colour = max(Pturn_red, Pturn_green, Pturn_yellow)
         if Pturn_red == colour:
             self.type = 3
         if Pturn_yellow == colour:
@@ -235,6 +236,7 @@ class SchellingAgent(Agent):
         if Pturn_green == colour:
             self.type = 1
             self.model.learning += 1
+
     def changeState(self):
         if self.behave > 5 and self.model.control < 3 and self.model.yellowState > 2:
             self.type = 3
@@ -248,8 +250,11 @@ class SchellingAgent(Agent):
             self.type = 2
         if self.behave_2 > 5 and self.model.quality > 3 and self.model.greenState > 5:
             self.type = 2
+
     def get_type(self):
         return self.type
+
+
 class Schelling(Model):
     '''
     Model class for the classroon model.
@@ -304,7 +309,8 @@ class Schelling(Model):
             agent_hyper_Impulsive = self.random.choice(hyper_Impulsive_list)
             # agent_hyper_Impulsive = self.random.randrange(10)
             agent_type = 2
-            agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive)
+            green = 0
+            agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,green)
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
             self.schedule.add(agent)
