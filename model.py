@@ -14,8 +14,8 @@ class SchellingAgent(Agent):
         self.behave_2 = behave_2
         self.greenState = g
         self.agent_state = self.random.randrange(6)
-       # self.redState = 0
-       # self.yellowState = 0
+        self.redState = 0
+        self.yellowState = 0
        # self.greenState = 0
 
     def neighbour(self):
@@ -45,6 +45,9 @@ class SchellingAgent(Agent):
         self.redStateCange()
         #self.changeState()
         print('agent type',self.type)
+        print('green state counter',self.greenState)
+        #if self.type == 1:
+            #self.greenState = self.greenState+2
        # self.neighbourState()
 
     def redStateCange(self):
@@ -52,35 +55,35 @@ class SchellingAgent(Agent):
         if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state and self.behave > 5:
             self.type = 3
             self.model.distruptive += 1
-            self.model.redState =+1
-            self.model.yellowState = 0
-            self.model.greenState = 0
+            self.redState +=1
+            self.yellowState = 0
+            self.greenState = 0
 
         if self.model.hyper_Impulsive == 1 and self.model.control < self.agent_state and self.behave_2 > 5:
             self.type = 3
             self.model.distruptive += 1
-            self.model.redState =+1
-            self.model.yellowState = 0
-            self.model.greenState = 0
+            self.redState +=1
+            self.yellowState = 0
+            self.greenState = 0
 
         if self.model.hyper_Impulsive == 1 and self.model.control > self.agent_state and self.behave_2 < 5 and self.type == 3:
             self.type = 3
             self.model.distruptive += 1
-            self.model.redState =+1
-            self.model.yellowState = 0
-            self.model.greenState = 0
+            self.redState +=1
+            self.yellowState = 0
+            self.greenState = 0
 
         if self.model.hyper_Impulsive == 0 and self.model.control < self.agent_state:
             self.type = 3
             self.model.distruptive += 1
-            self.redState =+1
+            self.redState +=1
             self.yellowState = 0
             self.greenState = 0
 
         if red > 5 and self.type == 2:
             self.type = 3
             self.model.distruptive += 1
-            self.redState =+1
+            self.redState +=1
             self.yellowState = 0
             self.greenState = 0
         Pturn_red = red/count
@@ -95,9 +98,9 @@ class SchellingAgent(Agent):
         else:
             Pturn_green += 0.2
         colour = max(Pturn_red, Pturn_green, Pturn_yellow)
-        if Pturn_yellow == colour:
+        if Pturn_red == colour:
             self.type = 3
-            self.redState =+ 1
+            self.redState += 1
             self.yellowState = 0
             self.greenState = 0
             print('here red color')
@@ -108,33 +111,33 @@ class SchellingAgent(Agent):
         if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state and self.behave < 5:
             self.type = 2
             self.redState = 0
-            self.yellowState =+ 1
+            self.yellowState += 1
             self.greenState = 0
 
         if self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type == 3:
             self.type = 2
             self.redState = 0
-            self.yellowState =+ 1
+            self.yellowState += 1
             self.greenState = 0
 
         if self.model.control < self.agent_state and self.type == 1:
             self.type = 2
             self.model.learning -= 1
             self.redState = 0
-            self.yellowState =+ 1
+            self.yellowState += 1
             self.greenState = 0
 
         if self.model.control > self.agent_state and self.type == 3:
             self.type = 2
             self.model.distruptive -= 1
             self.redState = 0
-            self.yellowState =+ 1
+            self.yellowState += 1
             self.greenState = 0
 
         if red > 2 and self.type == 1:
             self.type = 2
             self.redState = 0
-            self.yellowState =+ 1
+            self.yellowState += 1
             self.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
@@ -153,7 +156,7 @@ class SchellingAgent(Agent):
         if Pturn_yellow == colour:
             self.type = 2
             self.redState = 0
-            self.yellowState =+ 1
+            self.yellowState += 1
             self.greenState = 0
             print('here yellow color')
 
@@ -166,7 +169,7 @@ class SchellingAgent(Agent):
                 self.model.learning += 1
                 self.redState = 0
                 self.yellowState = 0
-                self.greenState =+ 1
+                self.greenState += 1
 
         if self.model.Inattentiveness == 1 and self.model.quality > self.agent_state and self.behave < 5:
             if self.type <= 2:
@@ -174,14 +177,14 @@ class SchellingAgent(Agent):
                 self.model.learning += 1
                 self.redState = 0
                 self.yellowState = 0
-                self.greenState =+ 1
+                self.greenState += 1
 
         if self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type <= 2:
             self.type = 1
             self.model.learning += 1
             self.redState = 0
             self.yellowState = 0
-            self.greenState =+ 1
+            self.greenState += 1
 
         if self.model.hyper_Impulsive == 1 and self.model.control > self.agent_state and self.behave_2 < 5 and self.type <= 2:
             if self.type <= 2:
@@ -189,7 +192,7 @@ class SchellingAgent(Agent):
                 self.model.learning += 1
                 self.redState = 0
                 self.yellowState = 0
-                self.greenState =+ 1
+                self.greenState += 1
 
         if green > 5 and self.type == 2:
             self.type = 1
@@ -211,9 +214,9 @@ class SchellingAgent(Agent):
             self.model.learning += 1
             self.redState = 0
             self.yellowState = 0
-            self.greenState =+ 1
+            self.greenState += 1
             print('here green color')
-            print('green state counter',self.greenState)
+
     def neighbourState(self):
         count, red, yellow, green = self.neighbour()
         # calculate the probability of each colour
@@ -240,16 +243,46 @@ class SchellingAgent(Agent):
     def changeState(self):
         if self.behave > 5 and self.model.control < 3 and self.yellowState > 2:
             self.type = 3
+            self.type = 3
+            self.model.distruptive += 1
+            self.redState +=1
+            self.yellowState = 0
+            self.greenState = 0
         if self.behave_2 > 5 and self.model.quality < 3 and self.yellowState > 2:
             self.type = 3
+            self.type = 3
+            self.model.distruptive += 1
+            self.redState +=1
+            self.yellowState = 0
+            self.greenState = 0
         if self.behave > 5 and self.model.control < 3 and self.greenState > 2:
             self.type = 2
+            self.redState = 0
+            self.yellowState += 1
+            self.greenState = 0
+            if self.model.learning > 0:
+                self.model.learning -= 1
         if self.behave_2 > 5 and self.model.quality < 3 and self.greenState > 2:
             self.type = 2
+            self.redState = 0
+            self.yellowState += 1
+            self.greenState = 0
+            if self.model.learning > 0:
+                self.model.learning -= 1
         if self.behave > 5 and self.model.control > 3 and self.greenState > 5:
             self.type = 2
+            self.redState = 0
+            self.yellowState += 1
+            self.greenState = 0
+            if self.model.learning > 0:
+                self.model.learning -= 1
         if self.behave_2 > 5 and self.model.quality > 3 and self.greenState > 5:
             self.type = 2
+            self.redState = 0
+            self.yellowState += 1
+            self.greenState = 0
+            if self.model.learning > 0:
+                self.model.learning -= 1
 
     def get_type(self):
         return self.type
@@ -309,7 +342,7 @@ class Schelling(Model):
             agent_hyper_Impulsive = self.random.choice(hyper_Impulsive_list)
             # agent_hyper_Impulsive = self.random.randrange(10)
             agent_type = 2
-            green = 0
+            green = 1
             agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,green)
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
@@ -324,9 +357,7 @@ class Schelling(Model):
         '''
         self.learning = 0  # Reset counter of learing agents
         self.distruptive = 0
-        self.redState = 0
-        self.yellowState = 0
-        self.greenState = 0
+
         self.schedule.step()
 
         # collect data
