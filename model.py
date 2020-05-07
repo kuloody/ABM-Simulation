@@ -44,6 +44,8 @@ class SchellingAgent(Agent):
         self.greenStateCange()
         self.redStateCange()
         self.changeState()
+        print('agent state', self.agent_state)
+        self.agent_state = self.random.randrange(6)
         # self.changeState()
         print('agent type', self.type)
         print('green state counter', self.greenState)
@@ -60,6 +62,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
 
         if self.model.hyper_Impulsive == 1 and self.model.control < self.agent_state and self.behave_2 > 5:
             self.type = 3
@@ -67,6 +70,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
 
         if self.model.hyper_Impulsive == 1 and self.model.control > self.agent_state and self.behave_2 < 5 and self.type == 3:
             self.type = 3
@@ -74,6 +78,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
 
         if self.model.hyper_Impulsive == 0 and self.model.control < self.agent_state:
             self.type = 3
@@ -81,6 +86,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
 
         if red > 5 and self.type == 2:
             self.type = 3
@@ -88,6 +94,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
         Pturn_red = red / count
         # Pturn_green = self.model.control + self.model.quality
         Pturn_green = green / count
@@ -106,6 +113,7 @@ class SchellingAgent(Agent):
             self.yellowState = 0
             self.greenState = 0
             print('here red color')
+            return
 
     def yellowStateCange(self):
 
@@ -115,12 +123,14 @@ class SchellingAgent(Agent):
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
+            return
 
         if self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type == 3:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
+            return
 
         if self.model.control < self.agent_state and self.type == 1:
             self.type = 2
@@ -128,6 +138,7 @@ class SchellingAgent(Agent):
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
+            return
 
         if self.model.control > self.agent_state and self.type == 3:
             self.type = 2
@@ -135,6 +146,7 @@ class SchellingAgent(Agent):
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
+            return
 
         if red > 2 and self.type == 1:
             self.type = 2
@@ -143,6 +155,7 @@ class SchellingAgent(Agent):
             self.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
+            return
 
         # Change state based on majority of neighbours's color and agent's current color state
         Pturn_red = red / count
@@ -173,6 +186,7 @@ class SchellingAgent(Agent):
                 self.redState = 0
                 self.yellowState = 0
                 self.greenState += 1
+                return
 
         elif self.model.Inattentiveness == 1 and self.model.quality > self.agent_state and self.behave < 5:
             if self.type <= 2:
@@ -181,6 +195,7 @@ class SchellingAgent(Agent):
                 self.redState = 0
                 self.yellowState = 0
                 self.greenState += 1
+                return
 
         elif self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type <= 2:
             self.type = 1
@@ -188,6 +203,7 @@ class SchellingAgent(Agent):
             self.redState = 0
             self.yellowState = 0
             self.greenState += 1
+            return
 
         elif self.model.hyper_Impulsive == 1 and self.model.control > self.agent_state and self.behave_2 < 5 and self.type <= 2:
             if self.type <= 2:
@@ -196,10 +212,12 @@ class SchellingAgent(Agent):
                 self.redState = 0
                 self.yellowState = 0
                 self.greenState += 1
+                return
 
         elif green > 5 and self.type == 2:
             self.type = 1
             self.model.learning += 1
+            return
         Pturn_red = red / count
         # Pturn_green = self.model.control + self.model.quality
         Pturn_green = green / count
@@ -252,6 +270,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
         # Change to red if hyber impulsive score is high and teaching quality is low and state is passive for long
         if self.behave_2 > 5 and self.model.quality < 3 and self.yellowState > 2:
             self.type = 3
@@ -260,6 +279,7 @@ class SchellingAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            return
         # Change to attentive (green) is hyber impulsive score is low and teaching quality is high and state is passive for long
         if self.behave_2 < 5 and self.model.quality > 3 and self.yellowState > 2:
             self.type = 1
@@ -268,6 +288,7 @@ class SchellingAgent(Agent):
             self.yellowState = 0
             self.greenState = 1
             self.model.learning += 1
+            return
         # Change to passive (yellow) if inattentiveness score is high and teaching control is low and state is green for long
         if self.behave > 5 and self.model.control < 3 and self.greenState > 2:
             self.type = 2
@@ -276,6 +297,7 @@ class SchellingAgent(Agent):
             self.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
+            return
         # Change to passive (yellow) if inattentiveness score is high and teaching quality is low and state is green for long
         if self.behave_2 > 5 and self.model.quality < 3 and self.greenState > 2:
             self.type = 2
@@ -284,6 +306,7 @@ class SchellingAgent(Agent):
             self.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
+            return
         # Change to passive (yellow) if inattentiveness score is high and teaching control is high and state is green for long
         # Student will lose interest if inattentiveness score is high regardless of teaching quality
         if self.behave > 5 and self.model.quality > 3 and self.greenState > 5:
@@ -293,6 +316,7 @@ class SchellingAgent(Agent):
             self.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
+            return
         # Change to passive (yellow) if hyber impulsive score is high and teaching control is high and state is green for long
         # Student will lose focus if hyber impulsive score is high regardless of teaching control
         if self.behave_2 > 5 and self.model.control > 3 and self.greenState > 5:
@@ -302,6 +326,23 @@ class SchellingAgent(Agent):
             self.greenState = 0
             if self.model.learning > 0:
                 self.model.learning -= 1
+            return
+        # Change to yellow if inattentiveness score is low
+        if self.behave < 5 and self.model.control < 3 and self.redState > 2:
+            self.type = 2
+            self.model.distruptive += 1
+            self.redState += 1
+            self.yellowState = 0
+            self.greenState = 0
+            return
+        # Change to yellow if hyber impulsive score is low
+        if self.behave_2 < 5 and self.model.quality < 3 and self.redState > 2:
+            self.type = 2
+            self.model.distruptive += 1
+            self.redState += 1
+            self.yellowState = 0
+            self.greenState = 0
+            return
 
     def get_type(self):
         return self.type
