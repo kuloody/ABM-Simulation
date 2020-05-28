@@ -1,21 +1,42 @@
+import random
+
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
+import pandas as pd
 
+def compute_ave(model):
+    agent_maths = [agent.s_math for agent in model.schedule.agents]
+    x = sum(agent_maths)
+    N = len(agent_maths)
+    B = x/N
+    print('the AVARAGE', B, agent_maths)
+    return B
 
+def compute_ave_disruptive(model):
+    agent_disruptiveTend = [agent.disruptiveTend for agent in model.schedule.agents]
+    x = sum(agent_disruptiveTend)
+    N = len(agent_disruptiveTend)
+    B = x/N
+    print('the AVARAGE', B, agent_disruptiveTend)
+    return B
 class SchellingAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, behave, behave_2, g):
+    def __init__(self, pos, model, agent_type, behave, behave_2, math, ability):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
         self.behave = behave
         self.behave_2 = behave_2
-        self.greenState = g
+        self.s_math = math
+        self.ability = ability
         self.agent_state = self.random.randrange(6)
+        self.greenState = 0
         self.redState = 0
         self.yellowState = 0
+        self.disrubted = 0
+        self.disruptiveTend = behave
 
     # self.greenState = 0
 
@@ -39,14 +60,18 @@ class SchellingAgent(Agent):
     def step(self):
         if self.type == 3:
             self.model.distruptive += 1
+            self.disrubted += 1
 
         self.yellowStateCange()
         self.greenStateCange()
         self.redStateCange()
         self.changeState()
+        self.set_disruptive_tend()
         print('agent state', self.agent_state)
-        self.agent_state = self.random.randrange(6)
-        # self.changeState()
+        print('start math',self.s_math)
+        print('ability', self.ability)
+       # self.agent_state = self.random.randrange(6)
+        #self.changeState()
         print('agent type', self.type)
         print('green state counter', self.greenState)
         # if self.type == 1:
@@ -57,32 +82,42 @@ class SchellingAgent(Agent):
     def redStateCange(self):
         count, red, yellow, green = self.neighbour()
         if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state and self.behave > 5:
+            if self.type == 1:
+                self.model.learning -= 1
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
             return
 
         if self.model.hyper_Impulsive == 1 and self.model.control < self.agent_state and self.behave_2 > 5:
+            if self.type == 1:
+                self.model.learning -= 1
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
             return
 
-        if self.model.hyper_Impulsive == 1 and self.model.control > self.agent_state and self.behave_2 < 5 and self.type == 3:
+        if self.model.hyper_Impulsive == 1 and self.model.control >= self.agent_state and self.behave_2 < 5 and self.type == 3:
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
             return
 
         if self.model.hyper_Impulsive == 0 and self.model.control < self.agent_state:
+            if self.type == 1:
+                self.model.learning -= 1
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
@@ -91,6 +126,7 @@ class SchellingAgent(Agent):
         if red > 5 and self.type == 2:
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
@@ -119,13 +155,16 @@ class SchellingAgent(Agent):
 
         count, red, yellow, green = self.neighbour()
         if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state and self.behave < 5:
+            if self.type == 1:
+                self.model.learning -= 1
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return
 
-        if self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type == 3:
+        if self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5:
+
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -143,6 +182,7 @@ class SchellingAgent(Agent):
         if self.model.control > self.agent_state and self.type == 3:
             self.type = 2
             self.model.distruptive -= 1
+            self.disrubted += 1
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
@@ -183,6 +223,7 @@ class SchellingAgent(Agent):
             if self.type <= 2:
                 self.type = 1
                 self.model.learning += 1
+                self.set_start_math()
                 self.redState = 0
                 self.yellowState = 0
                 self.greenState += 1
@@ -192,6 +233,7 @@ class SchellingAgent(Agent):
             if self.type <= 2:
                 self.type = 1
                 self.model.learning += 1
+                self.set_start_math()
                 self.redState = 0
                 self.yellowState = 0
                 self.greenState += 1
@@ -200,6 +242,7 @@ class SchellingAgent(Agent):
         elif self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type <= 2:
             self.type = 1
             self.model.learning += 1
+            self.set_start_math()
             self.redState = 0
             self.yellowState = 0
             self.greenState += 1
@@ -209,6 +252,7 @@ class SchellingAgent(Agent):
             if self.type <= 2:
                 self.type = 1
                 self.model.learning += 1
+                self.set_start_math()
                 self.redState = 0
                 self.yellowState = 0
                 self.greenState += 1
@@ -217,9 +261,11 @@ class SchellingAgent(Agent):
         elif green > 5 and self.type == 2:
             self.type = 1
             self.model.learning += 1
+            self.set_start_math()
             return
+
+        # Change state based on neighbours
         Pturn_red = red / count
-        # Pturn_green = self.model.control + self.model.quality
         Pturn_green = green / count
         Pturn_yellow = yellow / count
 
@@ -233,16 +279,16 @@ class SchellingAgent(Agent):
         if Pturn_green == colour:
             self.type = 1
             self.model.learning += 1
+            self.set_start_math()
             self.redState = 0
             self.yellowState = 0
-            # self.greenState += 1
+            self.greenState += 1
             print('here green color')
 
     def neighbourState(self):
         count, red, yellow, green = self.neighbour()
         # calculate the probability of each colour
         Pturn_red = red / count
-        # Pturn_green = self.model.control + self.model.quality
         Pturn_green = green / count
         Pturn_yellow = yellow / count
 
@@ -260,6 +306,7 @@ class SchellingAgent(Agent):
         if Pturn_green == colour:
             self.type = 1
             self.model.learning += 1
+            self.set_start_math()
 
     def changeState(self):
         # Change to red if inattentiveness score is high and teaching quality is low and state is passive for long
@@ -267,6 +314,7 @@ class SchellingAgent(Agent):
             self.type = 3
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
@@ -276,6 +324,7 @@ class SchellingAgent(Agent):
             self.type = 3
             self.type = 3
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
@@ -288,6 +337,7 @@ class SchellingAgent(Agent):
             self.yellowState = 0
             self.greenState = 1
             self.model.learning += 1
+            self.set_start_math()
             return
         # Change to passive (yellow) if inattentiveness score is high and teaching control is low and state is green for long
         if self.behave > 5 and self.model.control < 3 and self.greenState > 2:
@@ -331,6 +381,7 @@ class SchellingAgent(Agent):
         if self.behave < 5 and self.model.control < 3 and self.redState > 2:
             self.type = 2
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
@@ -339,13 +390,17 @@ class SchellingAgent(Agent):
         if self.behave_2 < 5 and self.model.quality < 3 and self.redState > 2:
             self.type = 2
             self.model.distruptive += 1
+            self.disrubted += 1
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
             return
-
+    def set_start_math(self):
+        self.s_math = (self.s_math + random.normalvariate(1, 2) * (0.0015 + (self.ability / 5000)) )
     def get_type(self):
         return self.type
+    def set_disruptive_tend(self):
+        self.disruptiveTend += (self.disrubted / 1300 )
 
 
 class Schelling(Model):
@@ -353,7 +408,7 @@ class Schelling(Model):
     Model class for the classroon model.
     '''
 
-    def __init__(self, height=6, width=6, quality=1, Inattentiveness=0, control=3, hyper_Impulsive=0):
+    def __init__(self, height=6, width=6, quality=1, Inattentiveness=0, control=3, hyper_Impulsive=0,AttentionSpan=0):
         '''
         '''
 
@@ -371,25 +426,17 @@ class Schelling(Model):
         self.redState = 0
         self.yellowState = 0
         self.greenState = 0
-        self.datacollector = DataCollector(
-            {"distruptive": "distruptive",
-             "learning": "learning",
-             "redState": "redState",
-             "greenState": "greenState",
-             "yellowState": "yellowState"},
-            # Model-level count of learning agents
-            # For testing purposes, agent's individual x and y
-            {"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]})
 
         # Set up agents
         # We use a grid iterator that returns
         # the coordinates of a cell as well as
         # its contents. (coord_iter)
         # create all agent with passive state and generate a random score for inattintiveness
+        counter = 0
         for cell in self.grid.coord_iter():
             x = cell[1]
             y = cell[2]
-            # Control radome behavior of agents
+            # Control random behavior score of agents
             if Inattentiveness == 1:
                 Inattentiveness_list = [1, 2, 3, 4] * 40 + [5, 6, 7, 8, 9] * 70
             else:
@@ -403,26 +450,40 @@ class Schelling(Model):
             # agent_hyper_Impulsive = self.random.randrange(10)
             agent_type = 2
             green = 1
-            agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive, green)
+            data = pd.read_csv('/home/zsrj52/Downloads/SimClass/patches.csv')
+            maths = data['start_maths']
+            abilities = data['ability']
+            #for index, row in flights.head().iterrows():
+            agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive, data['start_maths'][counter], abilities[counter])
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
             self.schedule.add(agent)
+            counter +=1
+        self.datacollector = DataCollector(
+            {"distruptive": "distruptive",
+             "learning": "learning",
+             "Average": compute_ave,
+             "disruptiveTend": compute_ave_disruptive},
+            # Model-level count of learning agents
+            # For testing purposes, agent's individual x and y
+            {"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]})
 
         self.running = True
-        self.datacollector.collect(self)
+
 
     def step(self):
         '''
         Run one step of the model. If All agents are learning, halt the model.
         '''
+
         self.learning = 0  # Reset counter of learing agents
         self.distruptive = 0
-
+        self.datacollector.collect(self)
         self.schedule.step()
 
         # collect data
         self.datacollector.collect(self)
-        if self.schedule.steps == 40.0:
+        if self.schedule.steps == 1300.0:
             self.running = False
 
         if self.learning == self.schedule.get_agent_count():
