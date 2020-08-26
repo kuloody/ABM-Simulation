@@ -44,6 +44,10 @@ def normal(agent_ability, x):
     minValue = min(agent_ability)
     maxValue = max(agent_ability)
     rescale = (x - minValue) / maxValue - minValue
+    #We want to test rescalling into a different range [1,20]
+    a = 1
+    b = 20
+    rescale = ((b-a)*(x - minValue) / (maxValue - minValue))+a
     return rescale
 
 
@@ -99,6 +103,7 @@ class SchellingAgent(Agent):
         print('start math', self.s_math)
         print('end math', self.e_math)
         print('ability', self.ability)
+        print('Learn Count', self.countLearning)
         # self.agent_state = self.random.randrange(6)
         # self.changeState()
         print('agent type', self.type)
@@ -111,7 +116,7 @@ class SchellingAgent(Agent):
 
     def redStateCange(self):
         count, red, yellow, green = self.neighbour()
-        if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state and self.behave > 5:
+        if self.disruptiveTend > compute_ave_disruptive(self.model) and self.model.quality <= self.agent_state and self.behave > 5:
             if self.type == 1:
                 self.model.learning -= 1
             self.type = 3
@@ -156,7 +161,7 @@ class SchellingAgent(Agent):
     def yellowStateCange(self):
 
         count, red, yellow, green = self.neighbour()
-        if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state and self.behave <= 5:
+        if self.disruptiveTend >= compute_ave_disruptive(self.model) and self.model.quality <= self.agent_state and self.behave <= 5:
             if self.type == 1:
                 self.model.learning -= 1
             self.type = 2
@@ -165,7 +170,7 @@ class SchellingAgent(Agent):
             self.greenState = 0
             return
 
-        if self.model.quality or self.model.quality > self.agent_state and self.behave >= 5:
+        if  self.model.quality > self.agent_state and self.behave >= 5:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -205,7 +210,7 @@ class SchellingAgent(Agent):
 
         count, red, yellow, green = self.neighbour()
 
-        if self.model.Inattentiveness == 1 and self.model.quality > self.agent_state and self.behave < 5:
+        if self.disruptiveTend > compute_ave_disruptive(self.model) and self.model.quality > self.agent_state and self.behave < 5:
             if self.type <= 2:
                 self.type = 1
                 self.model.learning += 1
@@ -215,7 +220,7 @@ class SchellingAgent(Agent):
                 self.greenState += 1
                 return
 
-        elif self.model.Inattentiveness == 0 and self.model.quality > self.agent_state and self.behave >= 5 and self.type <= 2:
+        elif self.disruptiveTend <= compute_ave_disruptive(self.model) and self.model.quality > self.agent_state and self.behave >= 5 and self.type <= 2:
             self.type = 1
             self.model.learning += 1
             self.set_start_math()
@@ -277,7 +282,7 @@ class SchellingAgent(Agent):
             self.greenState = 0
             return
         # Change to red if hyber impulsive score is high and teaching quality is low and state is passive for long
-        if self.behave_2 > 5 and self.model.quality < 3 and self.yellowState > 3:
+        if self.behave_2 > 5 and self.model.quality < 3 < self.yellowState:
             self.type = 3
             self.type = 3
             self.model.distruptive += 1
@@ -308,7 +313,7 @@ class SchellingAgent(Agent):
             if self.model.learning > 0:
                 self.model.learning -= 1
             return
-        # Change to passive (yellow) if inattentiveness score is high and teaching quality is low and state is green for long
+        # ##Change to passive (yellow) if inattentiveness score is high and teaching quality is low and state is green for long
         if self.behave_2 > 5 and self.model.quality < 3 and self.greenState > self.model.AttentionSpan:
             self.type = 2
             self.redState = 0
@@ -357,31 +362,26 @@ class SchellingAgent(Agent):
             return
 
     def set_start_math(self):
-        temp = self.e_math
-        # self.e_math = (temp + random.normalvariate(1, 2) * (0.10 + (self.ability/1000 ) ))
-        # self.e_math = (temp + random.normalvariate(1, 2) *(self.ability) )
-        # self.e_math = (temp *(self.ability) )+(self.countLearning/self.model.schedule.steps)
-        if self.countLearning == 0:
-            self.countLearning = 1
+
+        self.countLearning += 1
         if self.model.schedule.steps == 0:
             self.model.schedule.steps = 1
         # self.e_math = (temp *(self.ability) )+(9.7*2.303* math.log(self.countLearning))
+        #self.e_math = (self.s_math *(self.ability) )+(5.985*2.303* math.log(self.countLearning))
+        self.e_math = (5.985 * math.log(self.countLearning) + self.ability)
+        print('LOGFUNCTION &&&', math.log(self.countLearning))
 
-        self.e_math = ((self.countLearning / self.model.schedule.steps) * (
-                    self.ability + random.normalvariate(6, 8))) + (self.s_math)
-        self.countLearning += 1
+       # self.e_math = ((self.countLearning / self.model.schedule.steps) * (
+              #      self.ability + random.normalvariate(2, 3))) + (self.s_math)
+
 
     def get_type(self):
         return self.type
 
     def set_disruptive_tend(self):
-        # self.disruptiveTend += (self.disrubted / 1300 )
 
         self.initialDisrubtiveTend = compute_zscore(self.model, self.behave)
-        # Use stdv method to calculate the standard deviation of all behave in the class
-        # self.score = np.array([behave, behave_2])
-        # print("HERE BEFORE Z SCORE",self.score)
-        # self.initialDisrubtiveTend = stats.zscore(self.score)
+
         print("HERE AFTER Z SCORE", self.initialDisrubtiveTend)
         if self.model.schedule.steps == 0:
             self.model.schedule.steps = 1
@@ -434,14 +434,14 @@ class Schelling(Model):
             y = cell[2]
             # Control random behavior score of agents
             if Inattentiveness == 1:
-                Inattentiveness_list = [1, 2, 3, 4] * 40 + [5, 6, 7, 8, 9] * 70
+                Inattentiveness_list = [1, 2, 3, 4] * 30 + [5, 6, 7] * 60 + [8, 9]* 10
             else:
                 Inattentiveness_list = [1, 2, 3, 4] * 70 + [5, 6, 7, 8, 9] * 40
             agent_inattentiveness = self.random.choice(Inattentiveness_list)
             if hyper_Impulsive == 1:
-                hyper_Impulsive_list = [1, 2, 3, 4] * 30 + [5, 6, 7, 8, 9] * 70
+                hyper_Impulsive_list = [1, 2, 3, 4] * 30 + [5, 6] * 70
             else:
-                hyper_Impulsive_list = [1, 2, 3, 4] * 70 + [5, 6, 7, 8, 9] * 30
+                hyper_Impulsive_list = [1, 2, 3] * 70 + [4, 5, 6] * 30
             agent_hyper_Impulsive = self.random.choice(hyper_Impulsive_list)
             # agent_hyper_Impulsive = self.random.randrange(10)
 
@@ -455,7 +455,7 @@ class Schelling(Model):
 
             ability = normal(ability_zscore, ability_zscore[counter])
             agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,
-                                   agent_start_math[counter], ability)
+                                   agent_start_math[counter], ability_zscore[counter])
 
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
@@ -487,11 +487,11 @@ class Schelling(Model):
 
         # collect data
         self.datacollector.collect(self)
-        if self.schedule.steps == 1300.0 or self.running == False:
+        if self.schedule.steps == 12000.0 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
             dataAgent.to_csv(
-                '/home/zsrj52/Downloads/SimClass/SimClassDataSimDataTest-attainmentadds_math_normalnumber68_divBystep+normalability.csv')
+                '/home/zsrj52/Downloads/SimClass/Simulations19-08-2020/ChangeRescaleBackAddingticks1200-ability20+random.csv')
 
         # if self.learning == self.schedule.get_agent_count():
         # self.running = False
