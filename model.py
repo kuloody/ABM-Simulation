@@ -293,15 +293,7 @@ class SchellingAgent(Agent):
             return
         # Change to attentive (green) is hyber impulsive score is low and teaching quality is high and state is passive for long
         # if self.behave_2 < 5 and self.model.quality > 3 and self.yellowState > 3:
-        if self.yellowState > 3:
-            self.type = 1
-            self.model.distruptive -= 1
-            self.redState = 0
-            self.yellowState = 0
-            self.greenState = 1
-            self.model.learning += 1
-            self.set_start_math()
-            return
+
         # Change to green if passive for long
 
         # Change to passive (yellow) if inattentiveness score is high and teaching control is low and state is green for long
@@ -360,7 +352,26 @@ class SchellingAgent(Agent):
             self.yellowState = 0
             self.greenState = 0
             return
-
+        if self.yellowState > 3:
+            self.type = 1
+            if self.model.distruptive > 0:
+             self.model.distruptive -= 1
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState = 1
+            self.model.learning += 1
+            self.set_start_math()
+            return
+        if self.redState > 2 and  self.disruptiveTend <= compute_ave_disruptive(self.model) :
+            self.type = 1
+            if self.model.distruptive > 0:
+             self.model.distruptive -= 1
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState = 1
+            self.model.learning += 1
+            self.set_start_math()
+            return
     def set_start_math(self):
 
         self.countLearning += 1
@@ -368,7 +379,7 @@ class SchellingAgent(Agent):
             self.model.schedule.steps = 1
         # self.e_math = (temp *(self.ability) )+(9.7*2.303* math.log(self.countLearning))
         #self.e_math = (self.s_math *(self.ability) )+(5.985*2.303* math.log(self.countLearning))
-        self.e_math = (5.985 * math.log(self.countLearning) + self.ability)
+        self.e_math = (5.985 * math.log(self.countLearning) + (self.ability * random.normalvariate(1, 2)))
         print('LOGFUNCTION &&&', math.log(self.countLearning))
 
        # self.e_math = ((self.countLearning / self.model.schedule.steps) * (
@@ -454,8 +465,14 @@ class Schelling(Model):
             # agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive, data['start_maths'][counter], abilities[counter])
 
             ability = normal(ability_zscore, ability_zscore[counter])
+            if ability_zscore[counter] < 0:
+                smath= self.random.randint(0, 17)
+            else:
+                smath= self.random.randint(17, 70)
+            #agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,
+            #                       agent_start_math[counter], ability_zscore[counter])
             agent = SchellingAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,
-                                   agent_start_math[counter], ability_zscore[counter])
+                                   smath, ability_zscore[counter])
 
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
@@ -491,7 +508,7 @@ class Schelling(Model):
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
             dataAgent.to_csv(
-                '/home/zsrj52/Downloads/SimClass/Simulations19-08-2020/ChangeRescaleBackAddingticks1200-ability20+random.csv')
+                '/home/zsrj52/Downloads/SimClass/Simulations19-08-2020/Simulation01-addStartmathFormula.csv')
 
         # if self.learning == self.schedule.get_agent_count():
         # self.running = False
