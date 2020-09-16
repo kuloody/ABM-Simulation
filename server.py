@@ -40,7 +40,7 @@ class HappyElement(TextElement):
         return #"Learning agents: " + str(model.learning)+" Distruptive agents: " + str(model.distruptive)
 
 
-def schelling_draw(agent):
+def simclass_draw(agent):
     '''
     Portrayal Method for canvas
     '''
@@ -64,8 +64,8 @@ def hist(model):
     Average.plot()
 
 happy_element = HappyElement()
-canvas_element = CanvasGrid(schelling_draw, 6, 5, 400, 400)
-happy_chart = ChartModule([{"Label": "learning", "Color": "green"},{"Label": "distruptive", "Color": "red"},{"Label": "Average", "Color": "black"},{"Label": "disruptiveTend", "Color": "blue"}])
+canvas_element = CanvasGrid(simclass_draw, 6, 5, 400, 400)
+happy_chart = ChartModule([{"Label": "learning", "Color": "green"},{"Label": "distruptive", "Color": "red"},{"Label": "Average", "Color": "black"}])
 
 model_params = {
     "height": 5,
@@ -79,5 +79,5 @@ model_params = {
 
 histogram = HistogramModule(list(range(10)), 200, 500)
 server = ModularServer(SimClass,
-                       [canvas_element, happy_element, happy_chart, histogram],
+                       [canvas_element, happy_element, happy_chart],
                        "SimClass", model_params)
