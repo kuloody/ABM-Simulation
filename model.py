@@ -23,7 +23,8 @@ def compute_ave(model):
 def compute_ave_disruptive(model):
     agent_disruptiveTend = [agent.disruptiveTend for agent in model.schedule.agents]
     print('Calculate disrubtive tend original', agent_disruptiveTend)
-    B = statistics.mean(agent_disruptiveTend)
+    #B = statistics.mean(agent_disruptiveTend)
+    B = np.mean(agent_disruptiveTend)
     print('Calculate disrubtive tend after mean', agent_disruptiveTend)
     print('the AVARAGE', B, agent_disruptiveTend)
     return B
@@ -251,8 +252,7 @@ class SimClassAgent(Agent):
 
         count, red, yellow, green = self.neighbour()
 
-        if self.disruptiveTend > compute_ave_disruptive(
-                self.model) and self.model.quality > self.agent_state and self.behave < 5:
+        if self.model.Inattentiveness == 1 and self.model.quality > self.agent_state and self.behave < 5:
             if self.type <= 2:
                 self.type = 1
                 self.model.learning += 1
@@ -262,7 +262,7 @@ class SimClassAgent(Agent):
                 self.greenState += 1
                 return 1
         # this needs revision
-        if self.disruptiveTend <= compute_ave_disruptive(self.model) and (
+        if self.model.Inattentiveness == 1 and (
                 self.model.quality or self.model.control) > self.agent_state and self.type <= 2:
             self.type = 1
             self.model.learning += 1
@@ -447,17 +447,21 @@ class SimClassAgent(Agent):
     def set_start_math(self):
         #Increment the learning counter
         self.countLearning += 1
-        if self.model.schedule.steps == 0:
-            self.model.schedule.steps = 1
+
        # Scale Smath before using it to calculate end math score
-        Scaled_Smath = (2.303 ** self.s_math) ** (1 / 5.975)
-        total_learn = self.countLearning + Scaled_Smath
-        self.e_math = (5.985 * math.log(total_learn) + (self.ability * random.normalvariate(1, 2)))
+        Scaled_Smath = (2.718281828 ** ( self.s_math)) ** (1 / 5.985)
+        total_learn = self.countLearning + (Scaled_Smath)
+        #total_learn = self.countLearning
+        self.e_math = (5.985 * math.log(total_learn) ) + self.ability
+        #self.e_math = (5.985 * math.log(total_learn) + (random.normalvariate(1, 2)))
+        #self.e_math = (5.985 * math.log(total_learn) + (self.ability * random.normalvariate(1, 2)))
 
 
     # self.e_math = ((self.countLearning / self.model.schedule.steps) * (
     #      self.ability + random.normalvariate(2, 3))) + (self.s_math)
 
+        #temp = self.s_math
+        #self.e_math = (self.e_math + random.normalvariate(1, 2) * (0.0015 + (self.ability / 5000)) )
     def get_type(self):
         return self.type
 
@@ -502,8 +506,15 @@ class SimClass(Model):
         # agent_start_math = random.randrange(0,70,size=(36))
         agent_start_math = np.random.uniform(low=0, high=70, size=(36,))
         print('agent_start_math', agent_start_math)
-        ability_zscore = stats.zscore(agent_start_math)
-        print('ability_zscore', ability_zscore)
+        #ability_zscore = stats.zscore(agent_start_math)
+        #print('ability_zscore', ability_zscore)
+        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/testData.csv')
+        maths = data['s_maths'].to_numpy()
+        print('FROM FILE smath', maths)
+        ability_zscore = stats.zscore(maths)
+        #ability = data['ability']
+        behave = data['behav1'].to_numpy()
+        behav2 = data['behav2'].to_numpy()
         # what kind of code will it be?
         # Set up agents
         # We use a grid iterator that returns
@@ -535,9 +546,12 @@ class SimClass(Model):
             else:
                 smath = self.random.randint(17, 70)
 
-            # Create Agents
-            agent = SimClassAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,
-                                  smath, ability)
+            # Create Agents from simulation
+            #agent = SimClassAgent((x, y), self, agent_type, agent_inattentiveness, agent_hyper_Impulsive,
+             #                     smath, ability)
+            #create agents form real data
+            agent = SimClassAgent((x, y), self, agent_type, behave[counter], behav2[counter],
+                                  maths[counter], ability)
             # Place Agents on grid
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
@@ -546,9 +560,9 @@ class SimClass(Model):
 
         # Collect chosen data while running the model
         self.datacollector = DataCollector(
-            {"distruptive": "distruptive",
-             "learning": "learning",
-             "Average": compute_ave,
+            {"Distruptive Students": "distruptive",
+             "Learning Students": "learning",
+             "Average End Math": compute_ave,
              "disruptiveTend": compute_ave_disruptive},
             # Model-level count of learning agents
             # For testing purposes, agent's individual x and y
@@ -571,8 +585,8 @@ class SimClass(Model):
 
         # collect data
         self.datacollector.collect(self)
-        if self.schedule.steps == 12000.0 or self.running == False:
+        if self.schedule.steps == 1200.0 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
             dataAgent.to_csv(
-                '/home/zsrj52/Downloads/SimClass/Simulations19-08-2020/Simulation61-LowControl.csv')
+                '/home/zsrj52/Downloads/SimClass/Simulations19-08-2020/Simulation66-All-myModel-Kforrmulamultiplyby2again-.csv')
