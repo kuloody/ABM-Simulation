@@ -343,7 +343,7 @@ class SimClassAgent(Agent):
             self.greenState += 1
             return 1
 
-        if self.model.hyper_Impulsive == 0 and self.model.control > self.agent_state and self.behave_2 <= self.agent_state -1:
+        if self.model.hyper_Impulsive == 0 and self.model.control > self.agent_state  and self.behave_2 <= self.agent_state:
             self.type = 1
             self.model.learning += 1
             self.set_start_math()
@@ -407,7 +407,7 @@ class SimClassAgent(Agent):
         # Change to green if passive for long
 
         # Change to passive (yellow) if inattentiveness score is high and teaching control is low and state is green for long
-        if self.behave_2 < self.agent_state - 1 and self.model.control >= self.agent_state and self.yellowState > self.agent_state:
+        if self.behave_2 < self.agent_state and self.model.control <= self.agent_state and self.yellowState > self.agent_state:
             self.type = 1
             self.redState = 0
             self.yellowState = 0
@@ -417,7 +417,7 @@ class SimClassAgent(Agent):
 
             return 1
         # Similar to above but red fpr long
-        if self.behave_2 < self.agent_state -1  and self.model.control <= self.agent_state and self.redState > self.agent_state:
+        if self.behave_2 < self.agent_state and self.model.control <= self.agent_state and self.redState > self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -474,7 +474,7 @@ class SimClassAgent(Agent):
                 self.model.learning -= 1
             return 1
         # Change to yellow if hyper impulsive score is low
-        if self.behave_2 <= self.agent_state and self.model.quality <= self.agent_state and self.redState > 2:
+        if self.behave_2 <=  self.agent_state and self.model.quality <=  self.agent_state and self.redState > 2:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -482,7 +482,7 @@ class SimClassAgent(Agent):
             if self.model.learning > 0:
                 self.model.learning -= 1
             return 1
-        if self.behave_2 <= self.agent_state - 1 and self.model.control <= self.agent_state - 1 and self.redState > 2:
+        if self.behave_2 <= self.agent_state -1 and self.model.control <= self.agent_state - 1 and self.redState > self.agent_state - 1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -693,4 +693,4 @@ class SimClass(Model):
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
             dataAgent.to_csv(
-                '/home/zsrj52/Downloads/SimClass/Simulations-106/Simulation1-Heyperactivity.1.csv')
+                '/home/zsrj52/Downloads/SimClass/Simulations-106/Simulation1-Inattintivenes.csv')
