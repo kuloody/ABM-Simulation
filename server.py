@@ -3,7 +3,7 @@ from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.ModularVisualization import VisualizationElement
 import numpy as np
-from model import SimClass
+from ShortModel import SimClass
 
 class HistogramModule(VisualizationElement):
     package_includes = ["Chart.min.js"]
@@ -73,8 +73,9 @@ model_params = {
     "quality": UserSettableParameter("slider", "Teaching quality", 5.0 , 0.00, 5.0, 1.0),
     "control": UserSettableParameter("slider", "Control", 5.0 , 0.00, 5.0, 1.0),
     "Inattentiveness": UserSettableParameter("slider", "Inattentiveness ", 1.0 , 0.00, 1.0, 1.0),
-    "hyper_Impulsive": UserSettableParameter("slider", "hyper_Impulsive ", 1.0 , 0.00, 1.0, 1.0),
+    "hyper_Impulsive": UserSettableParameter("slider", "Hyperactivity ", 1.0 , 0.00, 1.0, 1.0),
     "AttentionSpan": UserSettableParameter("slider", "Attention Span", 5.0 , 0.00, 5.0, 1.0)
+    #"Nthreshold": UserSettableParameter("slider", "Neighbours Effect", 4.0 , 1.00, 4.0, 1.0)
 }
 
 histogram = HistogramModule(list(range(10)), 200, 500)
