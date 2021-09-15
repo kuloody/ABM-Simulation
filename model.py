@@ -9,6 +9,7 @@ import numpy as np
 from statistics import stdev
 import statistics
 import math
+from random import random
 
 
 def compute_ave(model):
@@ -58,8 +59,8 @@ def normal(agent_ability, x):
     maxValue = max(agent_ability)
     rescale = (x - minValue) / maxValue - minValue
     # We want to test rescaling into a different range [1,20]
-    a = 0
-    b = 1
+    a = 1
+    b = 2
     rescale = ((b - a) * (x - minValue) / (maxValue - minValue)) + a
     return rescale
 
@@ -449,12 +450,13 @@ class SimClassAgent(Agent):
 
         # Scale Smath before using it to calculate end math score
         # 8550t = 7.621204857
+        #random () generates a float number between 1 nd 0 of a normal distribution
 
         Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
         total_learn = self.countLearning + Scaled_Smath
         #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability
         #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
-        self.e_math = self.s_math * (1.00008851251858 ** self.countLearning)
+        self.e_math = self.s_math * (1.00008851251858 ** self.countLearning) + self.ability + random()
 
     def get_type(self):
         return self.type
@@ -498,7 +500,7 @@ class SimClass(Model):
 
         #Load data
 
-        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/testDataChanged.csv')
+        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
         maths = data['s_maths'].to_numpy()
         ability_zscore = stats.zscore(maths)
         behave = data['behav1'].to_numpy()
@@ -514,8 +516,7 @@ class SimClass(Model):
             # Initial State for all student is random
             agent_type = self.random.randint(1, 3)
             ability = ability_zscore[counter]
-
-
+            ability = normal(ability_zscore, ability_zscore[counter])
 
             # create agents form data
             agent = SimClassAgent((x, y), self, agent_type, behave[counter], behav2[counter],
@@ -554,4 +555,4 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-110/Simulation-nformulaAvarage-all.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-110/Simulation-nformulaAvarage-abilityScaled0-2-lowheyberlowInattintiveRandom.csv')
