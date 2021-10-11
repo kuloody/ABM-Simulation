@@ -456,7 +456,7 @@ class SimClassAgent(Agent):
         total_learn = self.countLearning + Scaled_Smath
         #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability
         #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
-        self.e_math = self.s_math * (1.00008851251858 ** self.countLearning) + self.ability + random()
+        self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #+ random()
 
     def get_type(self):
         return self.type
@@ -555,4 +555,4 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-110/Simulation-nformulaAvarage-abilityScaled0-2-lowheyberlowInattintiveRandom.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-110/Simulation-nformulaAvarage-multiplyabilityScaled1-2-alowcontrolupdatedformula.csv')
