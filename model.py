@@ -435,14 +435,7 @@ class SimClassAgent(Agent):
             self.model.learning += 1
             self.set_start_math()
             return 1
-        if self.greenState > self.model.AttentionSpan:
-            self.type = 2
-            self.redState = 0
-            self.yellowState += 1
-            self.greenState = 0
-            if self.model.learning > 0:
-                self.model.learning -= 1
-            return 1
+
 
     def set_start_math(self):
         # Increment the learning counter
@@ -555,4 +548,4 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-111/Simulation-lowhey.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-111/Simulation-all.2novariables.csv')
