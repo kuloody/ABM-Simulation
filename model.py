@@ -1,4 +1,5 @@
 import random
+import jenkspy
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import SingleGrid
@@ -10,6 +11,20 @@ from statistics import stdev
 import statistics
 import math
 from random import random
+import pickle
+import numpy as np
+import joblib
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+from DataBreak import *
+desired_width=320
+
+pd.set_option('display.width', desired_width)
+
+np.set_printoptions(linewidth=desired_width)
+
+pd.set_option('display.max_columns',20)
+from sklearn.model_selection import train_test_split
 
 
 def compute_ave(model):
@@ -76,10 +91,20 @@ def gen_random():
     arr2[args[-1]] -= int(np.round(decm * 69))
     return np.concatenate((arr1, mid, arr2))
 
+def predictioin(features):
+
+    data = pd.read_csv('/home/zsrj52/Downloads/SimClass/SimClassDataClassificationGrowthRateType3.csv')
+    dataConvert = data.to_numpy()
+    X = dataConvert[:,[2,4,5]]
+    y = dataConvert[:,20]
+    model = LinearRegression()
+    model.fit(X, y)
+    y_pred = model.predict(features)
+    return y_pred
 
 class SimClassAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, behave, behave_2, math, ability):
+    def __init__(self, pos, model, agent_type, behave, behave_2, math,age,fsm,  ability):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
@@ -87,6 +112,8 @@ class SimClassAgent(Agent):
         self.behave_2 = behave_2
         self.s_math = math
         self.e_math = math
+        self.age = age
+        self.fsm = fsm
 
         self.ability = ability
 
@@ -97,6 +124,26 @@ class SimClassAgent(Agent):
         self.disrubted = 0
         self.countLearning = 0
         self.disruptiveTend = behave
+
+        #Create Array of agent features
+        self.agentAttr = np.array([self.s_math, self.behave, self.behave_2])
+        self.agentAttr = self.agentAttr.reshape((1, -1))
+        self.growthRate = predictioin(self.agentAttr)
+        self.singleValueGrowth = float(self.growthRate[0])
+
+        #load the trained model for prediction
+        #loaded_model = pickle.load(open('/home/zsrj52/PycharmProjects/SimClass/prediction_model.sav', 'rb'))
+        #self.growth_pred = loaded_model.predict(self.agentAttr.tolist()).tolist()
+
+
+
+        #Load joblib model
+        m_jlib = joblib.load('model_jlib')
+        self.job_pred = m_jlib.predict(self.agentAttr.tolist()).tolist()
+
+        print('Agent features',self.agentAttr)
+        #print('Loaded model Prediction: ',self.job_pred)
+        print('function model Prediction: ',self.growthRate)
 
     # self.greenState = 0
 
@@ -125,8 +172,8 @@ class SimClassAgent(Agent):
         if self.redStateCange() == 1:
             # self.model.distruptive += 1
             self.changeState()
-            if self.type == 3:
-                self.model.distruptive += 1
+            #if self.type == 3:
+                #self.model.distruptive += 1
             self.set_disruptive_tend()
             self.agent_state = self.random.randint(2, 6)
 
@@ -141,8 +188,8 @@ class SimClassAgent(Agent):
         elif self.yellowStateCange() == 1:
             self.set_disruptive_tend()
             self.changeState()
-            if self.type == 3:
-                self.model.distruptive += 1
+            #if self.type == 3:
+                #self.model.distruptive += 1
             self.agent_state = self.random.randint(2, 6)
 
             return
@@ -152,7 +199,7 @@ class SimClassAgent(Agent):
     def redStateCange(self):
         count, red, yellow, green = self.neighbour()
 
-        if red > 5 and self.type == 2:
+        if red > 2 and self.type == 2:
             self.type = 3
             self.model.distruptive += 1
             self.disrubted += 1
@@ -161,21 +208,14 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if red > self.agent_state + 1 and self.disruptiveTend > compute_ave_disruptive(self.model):
+        if red > self.agent_state  and self.disruptiveTend > compute_ave_disruptive(self.model):
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
         # if Inattentiveness is on and quality is low
-        if self.model.Inattentiveness == 1  <= self.agent_state + 1 and self.behave > self.agent_state:
-            self.type = 3
-            self.model.distruptive += 1
-            self.disrubted += 1
-            self.redState += 1
-            self.yellowState = 0
-            self.greenState = 0
-            return 1
+
         # If both is high and student is disruptive
         if self.model.Inattentiveness == 1 and self.behave > self.agent_state:
             self.type = 3
@@ -186,7 +226,15 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if self.model.hyper_Impulsive == 1  and self.behave_2 > self.agent_state:
+        if self.model.hyper_Impulsive == 1 and self.behave_2 > self.agent_state:
+            self.type = 3
+            self.model.distruptive += 1
+            self.disrubted += 1
+            self.redState += 1
+            self.yellowState = 0
+            self.greenState = 0
+            return 1
+        if self.model.control and self.behave_2 > self.agent_state:
             self.type = 3
             self.model.distruptive += 1
             self.disrubted += 1
@@ -195,24 +243,18 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if red > self.model.Nthreshold and self.type == 2:
-            self.type = 3
-            self.model.distruptive += 1
-            self.disrubted += 1
-            self.redState += 1
-            self.yellowState = 0
-            self.greenState = 0
-            return 1
+
 
     def yellowStateCange(self):
 
         count, red, yellow, green = self.neighbour()
-        if self.model.Inattentiveness == 1  >= self.agent_state and self.behave <= self.agent_state:
+        if self.model.Inattentiveness == 1 and self.behave <= self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
+        #student is disruptive but inattintiveness is off
         if self.model.Inattentiveness == 0 and self.behave > self.agent_state:
             self.type = 2
             self.redState = 0
@@ -226,7 +268,7 @@ class SimClassAgent(Agent):
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if  self.behave > self.agent_state:
+        if self.behave > self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -234,14 +276,14 @@ class SimClassAgent(Agent):
             return 1
 
         # if control is less than student state
-        if self.type == 1:
-            self.type = 2
-            if self.model.learning > 0:
-                self.model.learning -= 1
-            self.redState = 0
-            self.yellowState += 1
-            self.greenState = 0
-            return
+       # if self.type == 1:
+        #    self.type = 2
+        #    if self.model.learning > 0:
+         #       self.model.learning -= 1
+          #  self.redState = 0
+          #  self.yellowState += 1
+           # self.greenState = 0
+            #return
         # At general if control is high turn into passive
         if  self.behave_2 > self.agent_state:
             self.type = 2
@@ -249,14 +291,7 @@ class SimClassAgent(Agent):
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if red > self.model.Nthreshold and self.type == 1:
-            self.type = 2
-            self.redState = 0
-            self.yellowState += 1
-            self.greenState = 0
-            if self.model.learning > 0:
-                self.model.learning -= 1
-            return 1
+
 
 
         # Change state based on majority of neighbours' color and agent's current color state
@@ -276,7 +311,7 @@ class SimClassAgent(Agent):
             return 1
 
 
-        if self.model.Inattentiveness != 0  or self.behave >= self.agent_state:
+        if self.model.Inattentiveness == 0 and self.behave <= self.agent_state:
             if self.model.Inattentiveness == 0 :
                 self.type = 1
                 self.model.learning += 1
@@ -294,7 +329,7 @@ class SimClassAgent(Agent):
                 self.yellowState = 0
                 self.greenState += 1
                 return 1
-            if  self.type == 2:
+            if self.type == 2 and self.behave <= self.agent_state:
                 self.type = 1
                 self.model.learning += 1
                 self.set_start_math()
@@ -302,14 +337,14 @@ class SimClassAgent(Agent):
                 self.yellowState = 0
                 self.greenState += 1
                 return 1
-            return
-        self.type = 1
-        self.model.learning += 1
-        self.set_start_math()
-        self.redState = 0
-        self.yellowState = 0
-        self.greenState += 1
-        return 1
+        #return
+      #  self.type = 1
+      #  self.model.learning += 1
+      #  self.set_start_math()
+     #   self.redState = 0
+      #  self.yellowState = 0
+     #   self.greenState += 1
+      #  return 1
 
     def neighbourState(self):
         count, red, yellow, green = self.neighbour()
@@ -327,7 +362,7 @@ class SimClassAgent(Agent):
         colour = max(Pturn_red, Pturn_green, Pturn_yellow)
         if Pturn_red == colour:
             self.type = 3
-            self.model.distruptive += 1
+            #self.model.distruptive += 1
             return
         if Pturn_yellow == colour:
             self.type = 2
@@ -380,7 +415,7 @@ class SimClassAgent(Agent):
             self.yellowState = 0
             self.greenState += 1
             self.model.learning += 1
-            # self.set_start_math()
+            self.set_start_math()
 
             return 1
 
@@ -425,7 +460,7 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if self.redState > self.agent_state :
+        if self.redState > self.agent_state:
             self.type = 1
             if self.model.distruptive > 0:
                 self.model.distruptive -= 1
@@ -435,8 +470,6 @@ class SimClassAgent(Agent):
             self.model.learning += 1
             self.set_start_math()
             return 1
-
-
     def set_start_math(self):
         # Increment the learning counter
         self.countLearning += 1
@@ -449,7 +482,15 @@ class SimClassAgent(Agent):
         total_learn = self.countLearning + Scaled_Smath
         #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability
         #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
-        self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #+ random()
+        if self.fsm == 1:
+            fsmVariable = self.random.randint(-1, 0)
+        else:
+            fsmVariable = self.random.randint(0, 1)
+
+
+        #self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.behave)
+        self.e_math = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.behave) + self.random.randint(0, 1) + fsmVariable
+
 
     def get_type(self):
         return self.type
@@ -467,12 +508,56 @@ class SimClassAgent(Agent):
 
     def test(self):
         print('HI I am test function ##############################')
+"""
+    def set_start_math(self):
+        # Increment the learning counter
+        self.countLearning += 1
+
+        # Scale Smath before using it to calculate end math score
+        # 8550t = 7.621204857
+        #random () generates a float number between 1 nd 0 of a normal distribution
+
+        Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
+        total_learn = self.countLearning + Scaled_Smath
+        #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability
+        #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
+
+        #self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.behave)
+        self.e_math = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.behave) + self.random.randint(0, 1) #* self.ability #
+
+    def set_start_math(self):
+        # Increment the learning counter
+        self.countLearning += 1
+        #if self.model.schedule.steps == 45:
+            #self.model.schoolDay +=1
+        self.age = self.age + self.model.schoolDay/365
+        print('type age &&&&&', self.age)
+
+        e = 100 + 5 * np.random.randn(1)
+        s = 1.0 + 0.115 * np.random.randn(1)
+        S = 1.0 + 0.085 * np.random.randn(1)
+        x = self.age
+        n = 4.5 + 0.5 * np.random.randn(1)
+        B = 100 + 5 * np.random.randn(1)
+        e2 = (s + S) * B * x + ((s + S) * n * x)
+        print('type e &&&&&', type(e))
+        function ='e * self.age'
+        function2 = '(s + S) * B * x + ((s + S) * n * x)'
+        value = eval(function2) * 1.00
+        print('type value &&&&&', type(value))
+        self.e_math= value.tolist()
+        self.e_math = self.e_math[0]
+        print('type emath &&&&&', type(self.e_math))
+        print(' emath &&&&&', self.e_math)
+
+"""
+
 
 
 class SimClass(Model):
 
 
-    def __init__(self, height=6, width=6, quality=1, Inattentiveness=0, control=3, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3):
+    def __init__(self, height=6, width=6, quality=1, Inattentiveness=0, control=3, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3, NumberofGroups=2):
 
         self.height = height
         self.width = width
@@ -484,20 +569,26 @@ class SimClass(Model):
         self.grid = SingleGrid(width, height, torus=True)
         self.AttentionSpan = AttentionSpan
         self.Nthreshold = Nthreshold
+        self.NumberofGroups = NumberofGroups
 
         self.learning = 0
         self.distruptive = 0
+        self.schoolDay = 0
+        self.daycounter = 0
         self.redState = 0
         self.yellowState = 0
         self.greenState = 0
 
         #Load data
 
-        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
+        #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
+        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/SampleDataFullVariables.csv')
         maths = data['s_maths'].to_numpy()
         ability_zscore = stats.zscore(maths)
         behave = data['behav1'].to_numpy()
         behav2 = data['behav2'].to_numpy()
+        age = data['Age_at_start'].to_numpy()
+        fsm = data['FSM'].to_numpy()
 
         # Set up agents
 
@@ -513,17 +604,19 @@ class SimClass(Model):
 
             # create agents form data
             agent = SimClassAgent((x, y), self, agent_type, behave[counter], behav2[counter],
-                                  maths[counter], ability)
+                                  maths[counter],age[counter],fsm[counter], ability)
             # Place Agents on grid
             self.grid.position_agent(agent, (x, y))
             print('agent pos:', x, y)
             self.schedule.add(agent)
             counter += 1
 
+
         # Collecting data while running the model
         self.datacollector = DataCollector(
             model_reporters={"Distruptive Students": "distruptive",
                              "Learning Students": "learning",
+                             "School Day": "schoolDay",
                              "Average End Math": compute_ave,
                              "disruptiveTend": compute_ave_disruptive
                              },
@@ -540,12 +633,94 @@ class SimClass(Model):
 
         self.learning = 0  # Reset counter of learing and disruptive agents
         self.distruptive = 0
+        Daycounter = self.schedule.time
+        self.daycounter+=1
+
+        if self.daycounter == 45:
+            self.schoolDay +=1
+            self.daycounter = 0
+        #self.schoolDay = self.schedule.steps
+        #if self.schedule.steps == 45:
+        #    self.schoolDay +=1
         self.datacollector.collect(self)
         self.schedule.step()
+        Daycounter =+1
 
         # collect data
         self.datacollector.collect(self)
+
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-111/Simulation-all.2novariables.csv')
+            data = dataAgent
+            data.sort_values(by='E_math')
+            data = data.reset_index()  # make sure indexes pair with number of rows
+            if self.NumberofGroups == 3:
+                ThreeBreaks(data)
+            else:
+                TwoBreaks(data)
+
+
+            #df['quantile'] = pd.qcut(df['e_maths'], q=3, labels=['group_1', 'group_2','group_3'])
+            breaks = jenkspy.jenks_breaks(data['E_math'], nb_class=self.NumberofGroups)
+            data['Classification'] = pd.cut(data['E_math'],
+                        bins=breaks,
+                        labels=[1, 2, 3],
+                        include_lowest=True)
+
+            Group1 = data[data ['Classification'] == 1]
+            Group2 = data[data ['Classification'] == 2]
+            Group3 = data[data ['Classification'] == 3]
+            dataConvert = data.to_numpy()
+            Group11 = Group1.to_numpy()
+            Group22 = Group2.to_numpy()
+            Group33 = Group3.to_numpy()
+            print(data)
+            FGroup = Group11[:,6]
+            SGroup = Group22[:,6]
+            TGroup = Group33[:,6]
+
+            # Create a figure instance
+            fig = plt.figure(1, figsize=(9, 6))
+
+            # Create an axes instance
+            ax = fig.add_subplot(111)
+
+            # Create the boxplot
+             ## add patch_artist=True option to ax.boxplot()
+            ## to get fill color
+            bp = ax.boxplot((FGroup, SGroup, TGroup), patch_artist=True)
+            ## change outline color, fill color and linewidth of the boxes
+            for box in bp['boxes']:
+             # change outline color
+              box.set( color='#7570b3', linewidth=2)
+              # change fill color
+              box.set( facecolor = '#1b8f9e' )
+
+            ## change color and linewidth of the whiskers
+            for whisker in bp['whiskers']:
+             whisker.set(color='#7570b3', linewidth=2)
+
+            ## change color and linewidth of the caps
+            for cap in bp['caps']:
+              cap.set(color='#7570b3', linewidth=2)
+
+            ## change color and linewidth of the medians
+            for median in bp['medians']:
+             median.set(color='#b2df8a', linewidth=2)
+
+            ## change the style of fliers and their fill
+            for flier in bp['fliers']:
+              flier.set(marker='o', color='#e7298a', alpha=0.5)
+            ax.set_xticklabels(['Group1', 'Group2', 'Group3'])
+
+            ax.set_ylabel('End Math')
+            plt.show(bp)
+            print("Classes are", Group11)
+            dataConvert = dataAgent.to_numpy()
+            plt.scatter(dataConvert[:,2], dataConvert[:,6],  s=50, alpha=0.5)
+            print("Y is",dataConvert[:,6])
+            plt.ylabel('Emath Score')
+            plt.xlabel('Inattintiveness')
+            plt.show()
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-114/all.FSM.csv')
