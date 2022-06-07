@@ -234,7 +234,7 @@ class SimClassAgent(Agent):
             self.yellowState = 0
             self.greenState = 0
             return 1
-        if self.model.control and self.behave_2 > self.agent_state:
+        if (self.model.control or self.model.quality) < self.agent_state and self.behave_2 > self.agent_state:
             self.type = 3
             self.model.distruptive += 1
             self.disrubted += 1
@@ -392,6 +392,15 @@ class SimClassAgent(Agent):
             self.greenState += 1
             self.model.learning += 1
             self.set_start_math()
+
+        if self.model.control < self.agent_state and self.yellowState > self.agent_state:
+            self.type = 3
+            self.model.distruptive += 1
+            self.disrubted += 1
+            self.redState += 1
+            self.yellowState = 0
+            self.greenState = 0
+            return 1
 
             return 1
         # Similar to above but red for long
@@ -561,9 +570,9 @@ class SimClass(Model):
 
         self.height = height
         self.width = width
-        #self.quality = quality
+        self.quality = quality
         self.Inattentiveness = Inattentiveness
-        #self.control = control
+        self.control = control
         self.hyper_Impulsive = hyper_Impulsive
         self.schedule = RandomActivation(self)
         self.grid = SingleGrid(width, height, torus=True)
