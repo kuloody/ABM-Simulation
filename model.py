@@ -26,6 +26,10 @@ np.set_printoptions(linewidth=desired_width)
 pd.set_option('display.max_columns',20)
 from sklearn.model_selection import train_test_split
 
+# defining the sigmoid function
+import numpy as np
+def sig(x):
+ return 1/(1 + np.exp(-x))
 
 def compute_ave(model):
     agent_maths = [agent.e_math for agent in model.schedule.agents]
@@ -118,6 +122,7 @@ class SimClassAgent(Agent):
         self.ability = ability
 
         self.agent_state = self.random.randint(2, 8)
+        #self.agent_random = random.random()
         self.greenState = 0
         self.redState = 0
         self.yellowState = 0
@@ -162,8 +167,9 @@ class SimClassAgent(Agent):
                 green += 1
 
         return neighbourCount, red, yellow, green
-
+    """""
     # define the step function
+
     def step(self):
         #   self.disrubted += 1
         # self.changeState()
@@ -195,6 +201,52 @@ class SimClassAgent(Agent):
             return
 
         self.agent_state = self.random.randrange(2,6)
+
+"""
+    def step(self):
+        #   self.disrubted += 1
+        # self.changeState()
+        print(self.model.schedule.steps)
+        print('Agent position', self.pos)
+        self.agent_state_1 = self.random.uniform(0.0,1.0)
+        if self.stateCurrent() == 1:
+            self.changeState()
+            self.agent_state_1 = self.random.uniform(0.0,1.0)
+            return
+        return
+
+# defineing a unified state function
+    def stateCurrent(self):
+        count, red, yellow, green = self.neighbour()
+        y = red+yellow+green+self.type+self.behave+self.behave_2-(self.model.quality+self.model.control)
+        x = sig(y)
+
+        if x < 1:
+            #r = x / 1000
+            print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,x,y,self.agent_state)
+            if x < self.agent_state_1:
+                print( 'the value of SIgmoid is $$$$$$$$$$$$$$$$',x,y )
+                self.type = 1
+                self.model.learning += 1
+                self.set_start_math()
+                self.redState = 0
+                self.yellowState = 0
+                self.greenState += 1
+                return 1
+            else:
+                self.type = 2
+                self.redState = 0
+                self.yellowState += 1
+                self.greenState = 0
+                return 1
+        else:
+            self.type = 3
+            self.model.distruptive += 1
+            self.disrubted += 1
+            self.redState += 1
+            self.yellowState = 0
+            self.greenState = 0
+            return 1
 
     def redStateCange(self):
         count, red, yellow, green = self.neighbour()
@@ -451,33 +503,33 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if self.behave_2 > self.agent_state - 1 and self.model.control > self.agent_state - 1 and self.redState > 3:
+        if self.behave_2 > self.agent_state - 1 and self.model.control > self.agent_state - 1 and self.redState > self.agent_state-1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
 
-        if self.model.control > self.agent_state and self.redState > 2:
+        if self.model.control > self.agent_state and self.redState > self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
 
-        if self.behave_2 <= self.agent_state and self.model.quality <= self.agent_state and self.redState > 2:
+        if self.behave_2 <= self.agent_state and self.model.quality <= self.agent_state and self.redState > self.agent_state -1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if self.behave_2 <= self.agent_state - 1 and self.redState > self.agent_state:
+        if self.behave_2 <= self.agent_state - 1 and self.redState > self.agent_state -1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if self.behave < self.agent_state and self.redState > self.agent_state:
+        if self.behave < self.agent_state and self.redState > self.agent_state -1:
             self.type = 2
             self.disrubted += 1
             self.redState = 0
@@ -620,8 +672,9 @@ class SimClass(Model):
 
         counter = 0
         for cell in self.grid.coord_iter():
-            x = cell[1]
-            y = cell[2]
+            #x = cell[1]
+            #y = cell[2]
+            x, y = self.grid.find_empty()
 
             # Initial State for all student is random
             agent_type = self.random.randint(1, 3)
@@ -632,7 +685,8 @@ class SimClass(Model):
             agent = SimClassAgent((x, y), self, agent_type, behave[counter], behav2[counter],
                                   maths[counter],age[counter],fsm[counter], ability)
             # Place Agents on grid
-            self.grid.position_agent(agent, (x, y))
+            #x, y = self.grid.find_empty()
+            self.grid.place_agent(agent, (x, y))
             print('agent pos:', x, y)
             self.schedule.add(agent)
             counter += 1
@@ -678,6 +732,8 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-116/all.csv')
+            """""
             data = dataAgent
             data.sort_values(by='E_math')
             data = data.reset_index()  # make sure indexes pair with number of rows
@@ -741,12 +797,13 @@ class SimClass(Model):
             ax.set_xticklabels(['Group1', 'Group2', 'Group3'])
 
             ax.set_ylabel('End Math')
-            plt.show(bp)
+            #plt.show(bp)
             print("Classes are", Group11)
             dataConvert = dataAgent.to_numpy()
             plt.scatter(dataConvert[:,2], dataConvert[:,6],  s=50, alpha=0.5)
             print("Y is",dataConvert[:,6])
             plt.ylabel('Emath Score')
             plt.xlabel('Inattintiveness')
-            plt.show()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-114/all.FSM.csv')
+            #plt.show()
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-115/all.csv')
+            """
