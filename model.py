@@ -108,10 +108,11 @@ def predictioin(features):
 
 class SimClassAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, behave, behave_2, math,age,fsm,  ability):
+    def __init__(self, pos, model, agent_type, id, behave, behave_2, math,age,fsm,  ability):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
+        self.id = id
         self.behave = behave
         self.behave_2 = behave_2
         self.s_math = math
@@ -198,6 +199,7 @@ class SimClassAgent(Agent):
                 #self.model.distruptive += 1
             self.agent_state = self.random.randint(2, 6)
 
+
             return
 
         self.agent_state = self.random.randrange(2,6)
@@ -221,7 +223,7 @@ class SimClassAgent(Agent):
         y = red+yellow+green+self.type+self.behave+self.behave_2-(self.model.quality+self.model.control)
         x = sig(y)
 
-        if x < 1:
+        if x < self.model.Nthreshold:
             #r = x / 1000
             print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,x,y,self.agent_state)
             if x < self.agent_state_1:
@@ -661,12 +663,15 @@ class SimClass(Model):
 
         #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
         data = pd.read_csv('/home/zsrj52/Downloads/SimClass/SampleDataFullVariables.csv')
+
+        # Take agent variables from the data
         maths = data['s_maths'].to_numpy()
         ability_zscore = stats.zscore(maths)
         behave = data['behav1'].to_numpy()
         behav2 = data['behav2'].to_numpy()
         age = data['Age_at_start'].to_numpy()
         fsm = data['FSM'].to_numpy()
+        id = data['id'].to_numpy()
 
         # Set up agents
 
@@ -674,6 +679,8 @@ class SimClass(Model):
         for cell in self.grid.coord_iter():
             #x = cell[1]
             #y = cell[2]
+
+            #Place agents in different postions each run
             x, y = self.grid.find_empty()
 
             # Initial State for all student is random
@@ -682,7 +689,7 @@ class SimClass(Model):
             ability = normal(ability_zscore, ability_zscore[counter])
 
             # create agents form data
-            agent = SimClassAgent((x, y), self, agent_type, behave[counter], behav2[counter],
+            agent = SimClassAgent((x, y), self, agent_type, id[counter], behave[counter], behav2[counter],
                                   maths[counter],age[counter],fsm[counter], ability)
             # Place Agents on grid
             #x, y = self.grid.find_empty()
@@ -701,7 +708,7 @@ class SimClass(Model):
                              "disruptiveTend": compute_ave_disruptive
                              },
             # Model-level count of learning agent
-            agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "Inattentiveness_score": "behave",
+            agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id":"id","Inattentiveness_score": "behave",
                              "Hyber_Inattinteveness": "behave_2", "S_math": "s_math", "S_read": "s_read",
                              "E_math": "e_math", "E_read": "e_read", "ability": "ability",
                              "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend"})
@@ -732,7 +739,7 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-116/all.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-116/all-middle1inattintive1hyperactive.csv')
             """""
             data = dataAgent
             data.sort_values(by='E_math')
