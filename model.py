@@ -130,6 +130,7 @@ class SimClassAgent(Agent):
         self.disrubted = 0
         self.countLearning = 0
         self.disruptiveTend = behave
+        #Adding neighbours and Sigmoid
 
         #Create Array of agent features
         self.agentAttr = np.array([self.s_math, self.behave, self.behave_2])
@@ -222,8 +223,10 @@ class SimClassAgent(Agent):
         count, red, yellow, green = self.neighbour()
         y = red+yellow+green+self.type+self.behave+self.behave_2-(self.model.quality+self.model.control)
         x = sig(y)
+        propability = self.random.uniform(0.98, 1)
 
-        if x < self.model.Nthreshold:
+        #if x < self.model.Nthreshold:
+        if x < propability:
             #r = x / 1000
             print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,x,y,self.agent_state)
             if x < self.agent_state_1:
@@ -560,7 +563,7 @@ class SimClassAgent(Agent):
 
         Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
         total_learn = self.countLearning + Scaled_Smath
-        #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability
+        self.e_math = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
         #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
         if self.fsm == 1:
             fsmVariable = self.random.randint(-1, 0)
@@ -569,7 +572,7 @@ class SimClassAgent(Agent):
 
 
         #self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.behave)
-        self.e_math = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.behave) + self.random.randint(0, 1) + fsmVariable
+        #self.e_math = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.behave) + self.random.randint(0, 1) + fsmVariable
 
 
     def get_type(self):
@@ -711,7 +714,7 @@ class SimClass(Model):
             agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id":"id","Inattentiveness_score": "behave",
                              "Hyber_Inattinteveness": "behave_2", "S_math": "s_math", "S_read": "s_read",
                              "E_math": "e_math", "E_read": "e_read", "ability": "ability",
-                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend"})
+                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours"})
 
         self.running = True
 
@@ -739,7 +742,7 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-116/all-middle1inattintive1hyperactive.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-117/all-random.csv')
             """""
             data = dataAgent
             data.sort_values(by='E_math')
