@@ -131,6 +131,8 @@ class SimClassAgent(Agent):
         self.countLearning = 0
         self.disruptiveTend = behave
         #Adding neighbours and Sigmoid
+        self.neighbours = 0
+        self.Sigmoid = 0
 
         #Create Array of agent features
         self.agentAttr = np.array([self.s_math, self.behave, self.behave_2])
@@ -209,28 +211,33 @@ class SimClassAgent(Agent):
     def step(self):
         #   self.disrubted += 1
         # self.changeState()
-        print(self.model.schedule.steps)
+        print('Step number:',self.model.schedule.steps)
+        print('Count learning value:', self.countLearning)
+        print('current emath value:', self.e_math)
         print('Agent position', self.pos)
-        self.agent_state_1 = self.random.uniform(0.0,1.0)
+        self.agent_state_1 = self.random.uniform(0.0,0.5)
         if self.stateCurrent() == 1:
             self.changeState()
-            self.agent_state_1 = self.random.uniform(0.0,1.0)
+            self.agent_state_1 = self.random.uniform(0.0,0.5)
             return
         return
 
 # defineing a unified state function
     def stateCurrent(self):
         count, red, yellow, green = self.neighbour()
-        y = red+yellow+green+self.type+self.behave+self.behave_2-(self.model.quality+self.model.control)
-        x = sig(y)
+        randomVariable = self.random.uniform(-6, 6)
+        y = red+yellow+green+self.type+self.behave+self.behave_2-(self.model.quality+self.model.control)-randomVariable
+        self.Sigmoid = sig(y)
+        self.neighbours = y
+
         propability = self.random.uniform(0.98, 1)
 
         #if x < self.model.Nthreshold:
-        if x < propability:
+        if self.Sigmoid < 0.95:
             #r = x / 1000
-            print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,x,y,self.agent_state)
-            if x < self.agent_state_1:
-                print( 'the value of SIgmoid is $$$$$$$$$$$$$$$$',x,y )
+            print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,self.Sigmoid,y,self.agent_state_1)
+            if self.Sigmoid < self.agent_state_1:
+                print( 'the value of SIgmoid is $$$$$$$$$$$$$$$$',self.Sigmoid,y )
                 self.type = 1
                 self.model.learning += 1
                 self.set_start_math()
@@ -515,11 +522,15 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if self.model.control > self.agent_state and self.redState > self.agent_state:
-            self.type = 2
+        if (self.model.control and self.model.quality) > self.agent_state and self.redState > self.agent_state:
+            self.type = 1
+            if self.model.distruptive > 0:
+                self.model.distruptive -= 1
             self.redState = 0
-            self.yellowState += 1
-            self.greenState = 0
+            self.yellowState = 0
+            self.greenState += 1
+            self.model.learning += 1
+            self.set_start_math()
             return 1
 
         if self.behave_2 <= self.agent_state and self.model.quality <= self.agent_state and self.redState > self.agent_state -1:
@@ -742,7 +753,7 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-117/all-random.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-117/all-Sigmoid-random(6)-3.csv')
             """""
             data = dataAgent
             data.sort_values(by='E_math')
