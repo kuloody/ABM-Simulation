@@ -216,10 +216,8 @@ class SimClassAgent(Agent):
         print('current emath value:', self.e_math)
         print('Agent position', self.pos)
         self.agent_state_1 = self.random.uniform(0.0,0.5)
-        if self.stateCurrent() == 1:
-            self.changeState()
-            self.agent_state_1 = self.random.uniform(0.0,0.5)
-            return
+        self.stateCurrent()
+        self.changeState()
         return
 
 # defineing a unified state function
@@ -570,11 +568,17 @@ class SimClassAgent(Agent):
 
         # Scale Smath before using it to calculate end math score
         # 8550t = 7.621204857
+        # new scale of Smath
+        # 8550 = 0.467666566
         #random () generates a float number between 1 nd 0 of a normal distribution
-
-        Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
+        MaxGainedScore = 69 - self.s_math
+        n= math.log(MaxGainedScore)/math.log(8550)
+        Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / n)
+        self.e_math = (self.countLearning ** n ) + self.s_math
+        #Old scale math:
+        #Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
         total_learn = self.countLearning + Scaled_Smath
-        self.e_math = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
+        #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
         #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
         if self.fsm == 1:
             fsmVariable = self.random.randint(-1, 0)
@@ -753,7 +757,7 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-117/all-Sigmoid-random(6)-3.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-117/all-Sigmoid-scallingFormula-3.csv')
             """""
             data = dataAgent
             data.sort_values(by='E_math')
