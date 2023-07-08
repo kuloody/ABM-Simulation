@@ -28,11 +28,28 @@ from sklearn.model_selection import train_test_split
 
 # defining the sigmoid function
 import numpy as np
+#Define Sigmoid function
 def sig(x):
  return 1/(1 + np.exp(-x))
 
+#Define seating arrangment function
+def coordenates(x,y):
+    x, y = x,y
+    if x % 4 == 0:
+        print('this is the coordenates function x, y is:',x,y)
+        #coordenates(model)
+        x+=1
+        if x == 10:
+            y+=1
+            x= 0
+        #coordenates(model)
+    return x, y
+
+
+
+
 def compute_ave(model):
-    agent_maths = [agent.e_math for agent in model.schedule.agents]
+    agent_maths = [agent.End_maths for agent in model.schedule.agents]
     x = sum(agent_maths)
     N = len(agent_maths)
     B = x / N
@@ -108,15 +125,18 @@ def predictioin(features):
 
 class SimClassAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, math,age,fsm,  ability):
+    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, math,Start_Reading,End_Reading,Start_Vocabulary,age,fsm,  ability):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
         self.id = id
         self.Inattentiveness = Inattentiveness
         self.Hyperactivity = Hyperactivity
-        self.s_math = math
-        self.e_math = math
+        self.Start_maths = math
+        self.End_maths = math
+        self.Start_Reading=Start_Reading
+        self.End_Reading = End_Reading
+        self.Start_Vocabulary = Start_Vocabulary
         self.age = age
         self.fsm = fsm
 
@@ -135,7 +155,7 @@ class SimClassAgent(Agent):
         self.Sigmoid = 0
 
         #Create Array of agent features
-        self.agentAttr = np.array([self.s_math, self.Inattentiveness, self.Hyperactivity])
+        self.agentAttr = np.array([self.Start_maths, self.Inattentiveness, self.Hyperactivity])
         self.agentAttr = self.agentAttr.reshape((1, -1))
         self.growthRate = predictioin(self.agentAttr)
         self.singleValueGrowth = float(self.growthRate[0])
@@ -214,6 +234,7 @@ class SimClassAgent(Agent):
         print('Step number:',self.model.schedule.steps)
         print('Count learning value:', self.countLearning)
         print('Agent position', self.pos)
+        self.stateCurrent()
         self.agent_state_1 = self.random.uniform(0.0,0.5)
         if self.stateCurrent() == 1:
             self.changeState()
@@ -224,18 +245,19 @@ class SimClassAgent(Agent):
 # defineing a unified state function
     def stateCurrent(self):
         count, red, yellow, green = self.neighbour()
-        randomVariable = self.random.uniform(-6, 6)
-        y = red+yellow+green+self.type+self.Inattentiveness+self.Hyperactivity-(self.model.quality+self.model.control)-randomVariable
+        randomVariable = self.random.uniform(-0.2, 0.5)
+
+        y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity)/20
         self.Sigmoid = sig(y)
         self.neighbours = y
 
         propability = self.random.uniform(0.98, 1)
 
         #if x < self.model.Nthreshold:
-        if self.Sigmoid < 0.95:
+        if self.Sigmoid < 0.6:
             #r = x / 1000
-            print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,self.Sigmoid,y,self.agent_state_1)
-            if self.Sigmoid < self.agent_state_1:
+            #print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,self.Sigmoid,y,self.agent_state_1)
+            if self.Sigmoid <= 0.5:
                 print( 'the value of SIgmoid is $$$$$$$$$$$$$$$$',self.Sigmoid,y )
                 self.type = 1
                 self.model.learning += 1
@@ -551,8 +573,7 @@ class SimClassAgent(Agent):
             self.yellowState += 1
             self.greenState = 0
             return 1
-
-        '''if self.redState > self.agent_state:
+        if self.yellowState > 2:
             self.type = 1
             if self.model.distruptive > 0:
                 self.model.distruptive -= 1
@@ -561,7 +582,10 @@ class SimClassAgent(Agent):
             self.greenState += 1
             self.model.learning += 1
             self.set_start_math()
-            return 1'''
+            return 1
+
+
+
 
     def set_start_math(self):
         # Increment the learning counter
@@ -572,22 +596,26 @@ class SimClassAgent(Agent):
         #random () generates a float number between 1 nd 0 of a normal distribution
 
         #Old scale math:
-        Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
+        Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / 7.621204857)
         total_learn = self.countLearning + Scaled_Smath
-        self.e_math = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
-        #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
-        MaxGainedScore = 69 - self.s_math
+        #self.End_maths = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
+        #self.End_maths = self.Start_maths * (1.001275 ** self.countLearning) #old growthrate
+        MaxGainedScore = 69 - self.Start_maths
         n= math.log(MaxGainedScore)/math.log(8550)
-        #Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / n)
-        self.e_math = (self.countLearning ** n) + self.s_math
+        #Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / n)
+        #self.End_maths = (self.countLearning ** n) + self.Start_maths
         if self.fsm == 1:
             fsmVariable = self.random.randint(-1, 0)
         else:
             fsmVariable = self.random.randint(0, 1)
 
+        #Formula from Baysian regrission
+        Intercept = 1
+        self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)
 
-        #self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.Inattentiveness)
-        #self.e_math = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.Inattentiveness) + self.random.randint(0, 1) + fsmVariable
+
+        #self.End_maths = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.Inattentiveness)
+        #self.End_maths = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.Inattentiveness) + self.random.randint(0, 1) + fsmVariable
 
 
     def get_type(self):
@@ -604,58 +632,12 @@ class SimClassAgent(Agent):
         self.disruptiveTend = (((self.disrubted / self.model.schedule.steps) - (
                 self.countLearning / self.model.schedule.steps)) + self.initialDisrubtiveTend)
 
-    def test(self):
-        print('HI I am test function ##############################')
-"""
-    def set_start_math(self):
-        # Increment the learning counter
-        self.countLearning += 1
-
-        # Scale Smath before using it to calculate end math score
-        # 8550t = 7.621204857
-        #random () generates a float number between 1 nd 0 of a normal distribution
-
-        Scaled_Smath = (2.718281828 ** self.s_math) ** (1 / 7.621204857)
-        total_learn = self.countLearning + Scaled_Smath
-        #self.e_math = (7.621204857 * math.log(total_learn)) + self.ability
-        #self.e_math = self.s_math * (1.001275 ** self.countLearning) #old growthrate
-
-        #self.e_math = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.Inattentiveness)
-        self.e_math = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.Inattentiveness) + self.random.randint(0, 1) #* self.ability #
-
-    def set_start_math(self):
-        # Increment the learning counter
-        self.countLearning += 1
-        #if self.model.schedule.steps == 45:
-            #self.model.schoolDay +=1
-        self.age = self.age + self.model.schoolDay/365
-        print('type age &&&&&', self.age)
-
-        e = 100 + 5 * np.random.randn(1)
-        s = 1.0 + 0.115 * np.random.randn(1)
-        S = 1.0 + 0.085 * np.random.randn(1)
-        x = self.age
-        n = 4.5 + 0.5 * np.random.randn(1)
-        B = 100 + 5 * np.random.randn(1)
-        e2 = (s + S) * B * x + ((s + S) * n * x)
-        print('type e &&&&&', type(e))
-        function ='e * self.age'
-        function2 = '(s + S) * B * x + ((s + S) * n * x)'
-        value = eval(function2) * 1.00
-        print('type value &&&&&', type(value))
-        self.e_math= value.tolist()
-        self.e_math = self.e_math[0]
-        print('type emath &&&&&', type(self.e_math))
-        print(' emath &&&&&', self.e_math)
-
-"""
-
 
 
 class SimClass(Model):
 
 
-    def __init__(self, height=6, width=6, quality=1, Inattentiveness=0, control=3, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3, NumberofGroups=2):
+    def __init__(self, height=11, width=11, quality=1, Inattentiveness=0, control=3, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3, NumberofGroups=2):
 
         self.height = height
         self.width = width
@@ -680,35 +662,51 @@ class SimClass(Model):
         #Load data
 
         #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
-        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/SampleDataFullVariables.csv')
+        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
 
         # Take agent variables from the data
-        maths = data['s_maths'].to_numpy()
+        maths = data['Start_maths'].to_numpy()
         ability_zscore = stats.zscore(maths)
-        Inattentiveness = data['behav1'].to_numpy()
-        behav2 = data['behav2'].to_numpy()
-        age = data['Age_at_start'].to_numpy()
+        Inattentiveness = data['Inattentiveness'].to_numpy()
+        Hyperactivity = data['Hyperactivity'].to_numpy()
+        Start_Reading = data['Start_Reading']
+        End_Reading = data['End_Reading']
+        age = data['End_age'].to_numpy()
+        Start_Vocabulary = data['Start_Vocabulary']
         fsm = data['FSM'].to_numpy()
-        id = data['id'].to_numpy()
+        id = data['ID'].to_numpy()
 
         # Set up agents
 
         counter = 0
-        for cell in self.grid.coord_iter():
+ #       for cell in self.grid.coord_iter():
+        for x in range(width):
+          print('x is ', x)
+          if x % 4 == 0:
+            continue
+          for y in range(height):
+            if y % 2 == 0:
+             continue
+
+            if counter == 30:
+                break
+            #x,y =coordenates(width,height)
+
             #x = cell[1]
             #y = cell[2]
 
             #Place agents in different postions each run
-            x, y = self.grid.find_empty()
+ #           x, y = self.grid.find_empty()
+
 
             # Initial State for all student is random
             agent_type = self.random.randint(1, 3)
-            ability = ability_zscore[counter]
+#            ability = ability_zscore[counter]
             ability = normal(ability_zscore, ability_zscore[counter])
 
             # create agents form data
-            agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter], behav2[counter],
-                                  maths[counter],age[counter],fsm[counter], ability)
+            agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter], Hyperactivity[counter],
+                                  maths[counter],Start_Reading[counter],End_Reading[counter],Start_Vocabulary[counter],age[counter],fsm[counter], ability)
             # Place Agents on grid
             #x, y = self.grid.find_empty()
             self.grid.place_agent(agent, (x, y))
@@ -727,8 +725,8 @@ class SimClass(Model):
                              },
             # Model-level count of learning agent
             agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id":"id","Inattentiveness_score": "Inattentiveness",
-                             "Hyber_Inattinteveness": "Hyperactivity", "S_math": "s_math", "S_read": "s_read",
-                             "E_math": "e_math", "E_read": "e_read", "ability": "ability",
+                             "Hyber_Inattinteveness": "Hyperactivity", "Start_maths": "Start_maths", "Start_Reading": "Start_Reading",
+                             "End_maths": "End_maths", "End_Reading": "End_Reading", "ability": "ability",
                              "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours"})
 
         self.running = True
@@ -744,9 +742,7 @@ class SimClass(Model):
         if self.daycounter == 45:
             self.schoolDay +=1
             self.daycounter = 0
-        #self.schoolDay = self.schedule.steps
-        #if self.schedule.steps == 45:
-        #    self.schoolDay +=1
+
         self.datacollector.collect(self)
         self.schedule.step()
         Daycounter =+1
@@ -757,78 +753,4 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-117/all-Sigmoid-random(6)-5-lowQulity.csv')
-            """""
-            data = dataAgent
-            data.sort_values(by='E_math')
-            data = data.reset_index()  # make sure indexes pair with number of rows
-            if self.NumberofGroups == 3:
-                ThreeBreaks(data)
-            else:
-                TwoBreaks(data)
-
-
-            #df['quantile'] = pd.qcut(df['e_maths'], q=3, labels=['group_1', 'group_2','group_3'])
-            breaks = jenkspy.jenks_breaks(data['E_math'], nb_class=self.NumberofGroups)
-            data['Classification'] = pd.cut(data['E_math'],
-                        bins=breaks,
-                        labels=[1, 2, 3],
-                        include_lowest=True)
-
-            Group1 = data[data ['Classification'] == 1]
-            Group2 = data[data ['Classification'] == 2]
-            Group3 = data[data ['Classification'] == 3]
-            dataConvert = data.to_numpy()
-            Group11 = Group1.to_numpy()
-            Group22 = Group2.to_numpy()
-            Group33 = Group3.to_numpy()
-            print(data)
-            FGroup = Group11[:,6]
-            SGroup = Group22[:,6]
-            TGroup = Group33[:,6]
-
-            # Create a figure instance
-            fig = plt.figure(1, figsize=(9, 6))
-
-            # Create an axes instance
-            ax = fig.add_subplot(111)
-
-            # Create the boxplot
-             ## add patch_artist=True option to ax.boxplot()
-            ## to get fill color
-            bp = ax.boxplot((FGroup, SGroup, TGroup), patch_artist=True)
-            ## change outline color, fill color and linewidth of the boxes
-            for box in bp['boxes']:
-             # change outline color
-              box.set( color='#7570b3', linewidth=2)
-              # change fill color
-              box.set( facecolor = '#1b8f9e' )
-
-            ## change color and linewidth of the whiskers
-            for whisker in bp['whiskers']:
-             whisker.set(color='#7570b3', linewidth=2)
-
-            ## change color and linewidth of the caps
-            for cap in bp['caps']:
-              cap.set(color='#7570b3', linewidth=2)
-
-            ## change color and linewidth of the medians
-            for median in bp['medians']:
-             median.set(color='#b2df8a', linewidth=2)
-
-            ## change the style of fliers and their fill
-            for flier in bp['fliers']:
-              flier.set(marker='o', color='#e7298a', alpha=0.5)
-            ax.set_xticklabels(['Group1', 'Group2', 'Group3'])
-
-            ax.set_ylabel('End Math')
-            #plt.show(bp)
-            print("Classes are", Group11)
-            dataConvert = dataAgent.to_numpy()
-            plt.scatter(dataConvert[:,2], dataConvert[:,6],  s=50, alpha=0.5)
-            print("Y is",dataConvert[:,6])
-            plt.ylabel('Emath Score')
-            plt.xlabel('Inattintiveness')
-            #plt.show()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-115/all.csv')
-            """
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-118/all-sigmoidChanged-newSeating-20-3.csv')
