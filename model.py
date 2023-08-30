@@ -191,74 +191,38 @@ class SimClassAgent(Agent):
                 green += 1
 
         return neighbourCount, red, yellow, green
-    """""
-    # define the step function
 
     def step(self):
-        #   self.disrubted += 1
-        # self.changeState()
-        print(self.model.schedule.steps)
-        print('Agent position', self.pos)
-        if self.redStateCange() == 1:
-            # self.model.distruptive += 1
-            self.changeState()
-            #if self.type == 3:
-                #self.model.distruptive += 1
-            self.set_disruptive_tend()
-            self.agent_state = self.random.randint(2, 6)
-
-            return
-        elif self.greenStateCange == 1:
-            self.changeState()
-            self.set_disruptive_tend()
-            self.agent_state = self.random.randint(2, 6)
-
-            return
-
-        elif self.yellowStateCange() == 1:
-            self.set_disruptive_tend()
-            self.changeState()
-            #if self.type == 3:
-                #self.model.distruptive += 1
-            self.agent_state = self.random.randint(2, 6)
-
-
-            return
-
-        self.agent_state = self.random.randrange(2,6)
-
-"""
-    def step(self):
-        #   self.disrubted += 1
-        # self.changeState()
+        # self.disrubted += 1
+        #self.changeState()
         print('Step number:',self.model.schedule.steps)
         print('Count learning value:', self.countLearning)
         print('Agent position', self.pos)
         self.stateCurrent()
         self.agent_state_1 = self.random.uniform(0.0,0.5)
-        if self.stateCurrent() == 1:
-            self.changeState()
-            self.agent_state_1 = self.random.uniform(0.0,0.5)
-            return
+
         return
 
 # defineing a unified state function
     def stateCurrent(self):
         count, red, yellow, green = self.neighbour()
-        randomVariable = self.random.uniform(-0.2, 0.5)
+        randomVariable = self.random.uniform(-10, 10)
 
-        y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity)/20
+        y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity+randomVariable)/12
         self.Sigmoid = sig(y)
         self.neighbours = y
+        print('student Inattentiveness & Hyperactivity:',self.Inattentiveness,self.Hyperactivity)
+        print('the total of student parameters: ',y)
+        print('the value of random variable',randomVariable)
+        print('the result of sigmoid:',self.Sigmoid)
 
         propability = self.random.uniform(0.98, 1)
 
         #if x < self.model.Nthreshold:
-        if self.Sigmoid < 0.6:
-            #r = x / 1000
-            #print( 'the value of Sigmoid is $$$$$$$**$$$$$$$' ,self.Sigmoid,y,self.agent_state_1)
-            if self.Sigmoid <= 0.5:
-                print( 'the value of SIgmoid is $$$$$$$$$$$$$$$$',self.Sigmoid,y )
+        if self.Sigmoid < 0.7:
+
+            if self.Sigmoid <= 0.6:
+                print( 'the value of SIgmoid is $',self.Sigmoid,y )
                 self.type = 1
                 self.model.learning += 1
                 self.set_start_math()
@@ -271,6 +235,9 @@ class SimClassAgent(Agent):
                 self.redState = 0
                 self.yellowState += 1
                 self.greenState = 0
+                Intercept = 1
+                self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/50
+
                 return 1
         else:
             self.type = 3
@@ -279,6 +246,9 @@ class SimClassAgent(Agent):
             self.redState += 1
             self.yellowState = 0
             self.greenState = 0
+            Intercept = 1
+            self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/80
+
             return 1
 
     def redStateCange(self):
@@ -590,6 +560,9 @@ class SimClassAgent(Agent):
     def set_start_math(self):
         # Increment the learning counter
         self.countLearning += 1
+        Intercept = 1
+        self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability
+
 
         # Scale Smath before using it to calculate end math score
         # 8550t = 7.621204857
@@ -610,8 +583,6 @@ class SimClassAgent(Agent):
             fsmVariable = self.random.randint(0, 1)
 
         #Formula from Baysian regrission
-        Intercept = 1
-        self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)
 
 
         #self.End_maths = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.Inattentiveness)
@@ -675,6 +646,7 @@ class SimClass(Model):
         Start_Vocabulary = data['Start_Vocabulary']
         fsm = data['FSM'].to_numpy()
         id = data['ID'].to_numpy()
+        coords=[]
 
         # Set up agents
 
@@ -710,6 +682,7 @@ class SimClass(Model):
             # Place Agents on grid
             #x, y = self.grid.find_empty()
             self.grid.place_agent(agent, (x, y))
+            coords.append([x,y])
             print('agent pos:', x, y)
             self.schedule.add(agent)
             counter += 1
@@ -743,6 +716,8 @@ class SimClass(Model):
             self.schoolDay +=1
             self.daycounter = 0
 
+
+
         self.datacollector.collect(self)
         self.schedule.step()
         Daycounter =+1
@@ -753,4 +728,4 @@ class SimClass(Model):
         if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-118/all-sigmoidChanged-newSeating-20-3.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-118/all-sigmoidChanged-newSeating-20-nochangestate-ability-redYellowAdd.csv')
