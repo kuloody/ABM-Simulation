@@ -17,9 +17,9 @@ class RightPanelElement(VisualizationElement):
         return f"""
 <h4 style="margin-top:0">Model Variables</h4>
 <table>
-    <tr><td style="padding: 5px;">Learning Students الطلاب المتعلمون:</td><td style="padding: 5px;">{model.learning:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Disruptive Students الطلاب المشاغبون:</td><td style="padding: 5px;">{model.distruptive:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Current school day اليوم الدراسي الحالي</td><td style="padding: 5px;">{model.schoolDay}</td></tr>
+    <tr><td style="padding: 5px;">Learning Students :</td><td style="padding: 5px;">{model.learning:.2f}</td></tr>
+    <tr><td style="padding: 5px;">Disruptive Students :</td><td style="padding: 5px;">{model.distruptive:.2f}</td></tr>
+    <tr><td style="padding: 5px;">Current school day </td><td style="padding: 5px;">{model.schoolDay}</td></tr>
 </table>
 """
 
@@ -37,7 +37,7 @@ class HistogramModule(VisualizationElement):
                                          canvas_height)
         self.js_code = "elements.push(" + new_element + ");"
     def render(self, model):
-     agent_maths = [agent.s_math for agent in model.schedule.agents]
+     agent_maths = [agent.Start_maths for agent in model.schedule.agents]
      ave = model.datacollector.get_model_vars_dataframe()
      ave.drop(columns=['disruptiveTend','Learning Students'])
      #x = sum(agent_maths)
@@ -69,7 +69,7 @@ class simElement(TextElement):
         pass
 
     def render(self, model):
-         agent_maths = [agent.s_math for agent in model.schedule.agents]
+         agent_maths = [agent.Start_maths for agent in model.schedule.agents]
          ave = model.datacollector.get_model_vars_dataframe()
          ave = ave["Average End Math"]
 
@@ -105,19 +105,21 @@ def hist(model):
     Average.plot()
 
 sim_element = simElement()
-canvas_element = CanvasGrid(simclass_draw, 6, 5, 400, 400)
+canvas_element = CanvasGrid(simclass_draw, 10, 10, 600, 600)
 sim_chart = ChartModule([{"Label": "Learning Students", "Color": "green"},{"Label": "Distruptive Students", "Color": "red"},{"Label": "Average End Math", "Color": "black"}])
 rightChart = RightPanelElement()
 model_params = {
-    "height": 5,
-    "width": 6,
-    "quality": UserSettableParameter("slider", "Teaching quality تحكم المعلم", 5.0 , 0.00, 5.0, 1.0),
-    "control": UserSettableParameter("slider", "Teacher Control جودة التدريس", 5.0 , 0.00, 5.0, 1.0),
-    "Inattentiveness": UserSettableParameter("slider", "Inattentiveness عدم الانتباه", 1.0 , 0.00, 1.0, 1.0),
-    "hyper_Impulsive": UserSettableParameter("slider", "Hyperactivity فرط الحركة ", 1.0 , 0.00, 1.0, 1.0),
+    "height": 10,
+    "width": 10,
+    "quality": UserSettableParameter("slider", "Teaching quality", 5.0 , 0.00, 5.0, 1.0),
+    "control": UserSettableParameter("slider", "Teacher Control", 5.0 , 0.00, 5.0, 1.0),
+    "Seating" : UserSettableParameter("slider", "Change Seats Every Lesson ", 1.0 , 0.00, 1.0, 1.0),
+    "State_Minutes" : UserSettableParameter("slider", "Minutes of Change State ", 5.0 , 1.00, 5.0, 1.0),
+    "Inattentiveness": UserSettableParameter("slider", "Inattentiveness ", 1.0 , 0.00, 1.0, 1.0),
+    "hyper_Impulsive": UserSettableParameter("slider", "Hyperactivity   ", 1.0 , 0.00, 1.0, 1.0),
     "AttentionSpan": UserSettableParameter("slider", "Attention Span", 5.0 , 0.00, 5.0, 1.0),
-     "Nthreshold": UserSettableParameter("slider", "Disrubtive Rang تأثير الجيران", 5.0 , 0.00, 5.0, 1.0),
-     "NumberofGroups": UserSettableParameter('choice', 'Number of Groups عدد المجموعات',3,choices=[3,2])
+     "Nthreshold": UserSettableParameter("slider", "Disruptive Range  ", 5.0 , 0.20, 1.0, 0.20),
+     "NumberofGroups": UserSettableParameter('choice', 'Number of Groups  ',3,choices=[3,2])
 
 }
 
