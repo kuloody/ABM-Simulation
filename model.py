@@ -176,13 +176,14 @@ def predictioin(features):
 
 class SimClassAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, math,Start_Reading,End_Reading,Start_Vocabulary,age,fsm,  ability):
+    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, Impulsiveness, math,Start_Reading,End_Reading,Start_Vocabulary,age,fsm, IDACI,  ability):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
         self.id = id
         self.Inattentiveness = Inattentiveness
         self.Hyperactivity = Hyperactivity
+        self.Impulsiveness = Impulsiveness
         self.Start_maths = math
         self.End_maths = math
         self.Start_Reading=Start_Reading
@@ -190,6 +191,7 @@ class SimClassAgent(Agent):
         self.Start_Vocabulary = Start_Vocabulary
         self.age = age
         self.fsm = fsm
+        self.IDACI = IDACI
 
         self.ability = ability
 
@@ -240,14 +242,17 @@ class SimClassAgent(Agent):
         print('Step number:',self.model.schedule.steps)
         print('Count learning value:', self.countLearning)
         print('Agent position', self.pos)
-        print('check agent vars',self.model.datacollector.get_agent_vars_dataframe())
+        #print('check agent vars',self.model.datacollector.get_agent_vars_dataframe())
+        self.stateCurrent()
+        '''''
         if self.minute_counter ==self.model.State_Minutes:
             self.stateCurrent()
             print('#################################################################slider',self.model.State_Minutes)
             print('#################################################################self.model.minute_counter',self.minute_counter)
             self.minute_counter = 0
+        '''''
 
-        print('#################################################################self.model.minute_counter',self.minute_counter)
+        print('self.model.minute_counter',self.minute_counter)
         self.minute_counter +=1
         if self.type==1:
            self.Green_State()
@@ -261,7 +266,7 @@ class SimClassAgent(Agent):
 # defineing a unified state function
     def stateCurrent(self):
         count, red, yellow, green = self.neighbour()
-        randomVariable = self.random.uniform(-10, 10)
+        randomVariable = self.random.uniform(-1, 1)
 
         y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity+randomVariable)/12
         self.Sigmoid = sig(y)
@@ -649,6 +654,8 @@ class SimClassAgent(Agent):
     def set_start_math(self):
         # Increment the learning counter
         #self.countLearning += 1
+        #Transform the disrupted counter
+        Disrupted= self.disrubted * self.random.uniform(0.00,0.002)
         Intercept = 1
         MaxScore = 69
         # Evalue = MaxScore /ln 8550
@@ -657,10 +664,10 @@ class SimClassAgent(Agent):
         Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / Evalue)
         total_learn = self.countLearning + Scaled_Smath
         end_maths = (Evalue * math.log(total_learn))
-        self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + (-0.01 * self.Inattentiveness) + 0.81 * self.age #+ self.random.randint(-1, 0)#+self.ability
+        #self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + (-0.01 * self.Inattentiveness) + 0.81 * self.age #+ self.random.randint(-1, 0)#+self.ability
         #self.End_maths = (7.621204857 * math.log(end_maths))
         #self.End_maths = self.BayModel()
-        self.End_maths = self.LinearRegressionModel()
+        self.End_maths = self.LinearRegressionModel() - Disrupted + self.random.randint(-2, 2)
 
 
         # Scale Smath before using it to calculate end math score
@@ -684,7 +691,7 @@ class SimClassAgent(Agent):
 
         #Formula from Baysian regrission
     def BayModel (self):
-        with open('/home/zsrj52/Downloads/SimClass/model2.pkl', 'rb') as buff:
+        with open('/home/zsrj52/Downloads/SimClass/LinearModel.sav', 'rb') as buff:
                 data = pickle.load(buff)
         model = data['model']
         trace = data['trace']
@@ -706,11 +713,7 @@ class SimClassAgent(Agent):
         # Actual Value
         data = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age]
         test_observation =pd.DataFrame(data)
-        #test_observation2 = test_observation[['Start_maths','Start_Reading','Start_Vocabulary','Inattentiveness','End_age']]
-        #test_observation2=test_observation2.reset_index(drop=True)
-        # Add in intercept term
-        #test_observation2['Intercept'] = 1
-        #test_observation = test_observation.drop('Step')
+
         print('test observation',test_observation)
 
         # Align weights and test observation
@@ -737,6 +740,8 @@ class SimClassAgent(Agent):
         # load the model from disk
         filename = '/home/zsrj52/Downloads/SimClass/LinearModel.sav'
         loaded_model = pickle.load(open(filename, 'rb'))
+        #9 Features
+        #Pdata = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age,self.Start_Vocabulary,self.fsm,self.IDACI,self.Impulsiveness]
         Pdata = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age]
         Pdata = np.array(Pdata)
         pred = loaded_model.predict(Pdata.reshape(1, -1))
@@ -798,12 +803,14 @@ class SimClass(Model):
         ability_zscore = stats.zscore(maths)
         Inattentiveness = data['Inattentiveness'].to_numpy()
         Hyperactivity = data['Hyperactivity'].to_numpy()
+        Impulsiveness = data['Impulsiveness'].to_numpy()
         Start_Reading = data['Start_Reading'].to_numpy()
         End_Reading = data['End_Reading'].to_numpy()
         age = data['End_age'].to_numpy()
         Start_Vocabulary = data['Start_Vocabulary'].to_numpy()
         fsm = data['FSM'].to_numpy()
         id = data['ID'].to_numpy()
+        IDACI = data['IDACI'].to_numpy()
         coords=[]
 
         # Set up agents
@@ -835,8 +842,8 @@ class SimClass(Model):
             ability = normal(ability_zscore, ability_zscore[counter])
 
             # create agents form data
-            agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter], Hyperactivity[counter],
-                                  maths[counter],Start_Reading[counter],End_Reading[counter],Start_Vocabulary[counter],age[counter],fsm[counter], ability)
+            agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter], Hyperactivity[counter],Impulsiveness[counter],
+                                  maths[counter],Start_Reading[counter],End_Reading[counter],Start_Vocabulary[counter],age[counter],fsm[counter],IDACI[counter], ability)
             # Place Agents on grid
             #x, y = self.grid.find_empty()
             self.grid.place_agent(agent, (x, y))
@@ -886,7 +893,7 @@ class SimClass(Model):
         # collect data
         self.datacollector.collect(self)
 
-        if self.schedule.steps == 85 or self.running == False:
+        if self.schedule.steps == 8550 or self.running == False:
             self.running = False
             dataAgent = self.datacollector.get_agent_vars_dataframe()
-            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-120/all-sigmoidChanged-newSeating-changeSeating-LinearRegrission.csv')
+            dataAgent.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-120/all-linearRegrission-9FEATURE.csv')
