@@ -31,8 +31,9 @@ from sklearn.model_selection import train_test_split
 # defining the sigmoid function
 import numpy as np
 #Define Sigmoid function
-def sig(x):
- return 1/(1 + np.exp(-x))
+def sig(x,a):
+ a=(a/2)
+ return 1/(1 + np.exp(-x))-a
 
 
 #Define seating arrangment function
@@ -268,8 +269,8 @@ class SimClassAgent(Agent):
         count, red, yellow, green = self.neighbour()
         randomVariable = self.random.uniform(-1, 1)
 
-        y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity+randomVariable)/12
-        self.Sigmoid = sig(y)
+        y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity+randomVariable)
+        self.Sigmoid = sig(y,self.model.Nthreshold)
         self.neighbours = y
         print('student Inattentiveness & Hyperactivity:',self.Inattentiveness,self.Hyperactivity)
         print('the total of student parameters: ',y)
@@ -279,19 +280,20 @@ class SimClassAgent(Agent):
         propability = self.random.uniform(0.98, 1)
 
         #if x < self.model.Nthreshold:
-        if self.Sigmoid < 0.7:
+        if y <= self.model.Nthreshold:
 
-            if self.Sigmoid <= 0.6:
-                print( 'the value of SIgmoid is $',self.Sigmoid,y )
-                self.type = 1
-                self.model.learning += 1
-                self.countLearning += 1
-                self.set_start_math()
-                self.redState = 0
-                self.yellowState = 0
-                self.greenState += 1
-                return 1
-            else:
+            #if self.Sigmoid <= 0.6:
+                #print( 'the value of SIgmoid is $',self.Sigmoid,y )
+            self.type = 1
+            self.model.learning += 1
+            self.countLearning += 1
+            self.set_start_math()
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState += 1
+            return 1
+        else :
+            if self.Impulsiveness == 0:
                 self.type = 2
                 self.disrubted += 0.5
                 self.countLearning += 0.3
@@ -303,17 +305,17 @@ class SimClassAgent(Agent):
                 #self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/50
 
                 return 1
-        else:
-            self.type = 3
-            self.model.distruptive += 1
-            self.countLearning += 0.1
-            self.disrubted += 1
-            self.redState += 1
-            self.yellowState = 0
-            self.greenState = 0
-            self.set_start_math()
-            Intercept = 1
-            #self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/80
+            else :
+                self.type = 3
+                self.model.distruptive += 1
+                self.countLearning += 0.1
+                self.disrubted += 1
+                self.redState += 1
+                self.yellowState = 0
+                self.greenState = 0
+                self.set_start_math()
+                Intercept = 1
+                #self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/80
 
             return 1
     def Green_State(self):
@@ -865,7 +867,7 @@ class SimClass(Model):
             agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id":"id",
                              "Hyperactivity": "Hyperactivity", "Start_maths": "Start_maths", "Start_Reading": "Start_Reading",
                              "End_maths": "End_maths", "End_Reading": "End_Reading","Start_Vocabulary":"Start_Vocabulary","Inattentiveness": "Inattentiveness","End_age":"age", "ability": "ability",
-                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours"})
+                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours","disrubted":"disrubted"})
 
         self.running = True
 
