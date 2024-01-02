@@ -34,7 +34,8 @@ import numpy as np
 def sig(x,a):
  a=(a/2)
  return 1/(1 + np.exp(-x))-a
-
+ 
+#For Batchrun Group Classes
 def data_input(data, key):
     print('Here is the data type',type(data))
     if type(data) is dict:
@@ -152,7 +153,7 @@ def compute_SD(model, x):
     else:
         return 0
 
-
+#normalize agent ability variable
 def normal(agent_ability, x):
 
     minValue = min(agent_ability)
@@ -175,7 +176,8 @@ def gen_random():
     arr2[args[-70:-1]] -= int(intg)
     arr2[args[-1]] -= int(np.round(decm * 69))
     return np.concatenate((arr1, mid, arr2))
-
+ 
+#Prediction using LR pre-trained model
 def predictioin(features):
 
     data = pd.read_csv('/home/zsrj52/Downloads/SimClass/SimClassDataClassificationGrowthRateType3.csv')
@@ -259,10 +261,11 @@ class SimClassAgent(Agent):
         #print('check agent vars',self.model.datacollector.get_agent_vars_dataframe())
         self.stateCurrent()
         '''''
+        #Change agent state per defined minutes
         if self.minute_counter ==self.model.State_Minutes:
             self.stateCurrent()
-            print('#################################################################slider',self.model.State_Minutes)
-            print('#################################################################self.model.minute_counter',self.minute_counter)
+            print('#slider',self.model.State_Minutes)
+            print('self.model.minute_counter',self.minute_counter)
             self.minute_counter = 0
         '''''
 
