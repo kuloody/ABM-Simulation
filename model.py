@@ -35,12 +35,24 @@ def sig(x,a):
  a=(a/2)
  return 1/(1 + np.exp(-x))-a
 
+def data_input(data, key):
+    print('Here is the data type',type(data))
+    if type(data) is dict:
+        ExtractedData = data[key]
+        print('Here is the Exctracted dict item', ExtractedData)
+ #       for item in data.values():
+ #           ExtractedData = (item[:])
+    else:
+       ExtractedData = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
+
+    return ExtractedData
+
 
 #Define seating arrangment function
 def coordenates(x,y):
     x, y = x,y
     if x % 4 == 0:
-        print('this is the coordenates function x, y is:',x,y)
+        #print('this is the coordenates function x, y is:',x,y)
         #coordenates(model)
         x+=1
         if x == 10:
@@ -55,7 +67,7 @@ def spaceCoordenates(height, width):
     spaceSeats = []
 
     for x in range(width):
-          print('x is ', x)
+          #print('x is ', x)
           if x % 4 == 0:
             for y in range(height):
              if y % 2 == 0:
@@ -105,23 +117,23 @@ def compute_ave(model):
     x = sum(agent_maths)
     N = len(agent_maths)
     B = x / N
-    print('the AVARAGE of end math', B, agent_maths)
+    #print('the AVARAGE of end math', B, agent_maths)
     return B
 
 
 def compute_ave_disruptive(model):
     agent_disruptiveTend = [agent.disruptiveTend for agent in model.schedule.agents]
-    print('Calculate disrubtive tend original', agent_disruptiveTend)
+    #print('Calculate disrubtive tend original', agent_disruptiveTend)
     # B = statistics.mean(agent_disruptiveTend)
     B = np.mean(agent_disruptiveTend)
-    print('Calculate disrubtive tend after mean', agent_disruptiveTend)
-    print('the AVARAGE of disruptive', B, agent_disruptiveTend)
+    #print('Calculate disrubtive tend after mean', agent_disruptiveTend)
+    #print('the AVARAGE of disruptive', B, agent_disruptiveTend)
     return B
 
 
 def compute_zscore(model, x):
     agent_Inattentiveness = [agent.Inattentiveness for agent in model.schedule.agents]
-    print('Calculate variance', agent_Inattentiveness)
+    #print('Calculate variance', agent_Inattentiveness)
     SD = stdev(agent_Inattentiveness)
     mean = statistics.mean(agent_Inattentiveness)
     zscore = (x - mean) / SD
@@ -130,7 +142,7 @@ def compute_zscore(model, x):
 
 def compute_SD(model, x):
     agent_disruptiveTend = [agent.disruptiveTend for agent in model.schedule.agents]
-    print('Calculate variance', agent_disruptiveTend)
+    #print('Calculate variance', agent_disruptiveTend)
     b = [float(s) for s in agent_disruptiveTend]
     SD = stdev(b)
     mean = statistics.mean(b)
@@ -177,7 +189,7 @@ def predictioin(features):
 
 class SimClassAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, Impulsiveness, math,Start_Reading,End_Reading,Start_Vocabulary,age,fsm, IDACI,  ability):
+    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, Impulsiveness, math,Start_Reading,End_Reading,Start_Vocabulary,age,fsm, IDACI,  ability,Classroom_ID):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
@@ -195,6 +207,7 @@ class SimClassAgent(Agent):
         self.IDACI = IDACI
 
         self.ability = ability
+        self.Classroom_ID = Classroom_ID
 
         self.agent_state = self.random.randint(2, 8)
         #self.agent_random = random.random()
@@ -241,8 +254,8 @@ class SimClassAgent(Agent):
     def step(self):
 
         print('Step number:',self.model.schedule.steps)
-        print('Count learning value:', self.countLearning)
-        print('Agent position', self.pos)
+        #print('Count learning value:', self.countLearning)
+        #print('Agent position', self.pos)
         #print('check agent vars',self.model.datacollector.get_agent_vars_dataframe())
         self.stateCurrent()
         '''''
@@ -253,7 +266,7 @@ class SimClassAgent(Agent):
             self.minute_counter = 0
         '''''
 
-        print('self.model.minute_counter',self.minute_counter)
+        #print('self.model.minute_counter',self.minute_counter)
         self.minute_counter +=1
         if self.type==1:
            self.Green_State()
@@ -272,10 +285,10 @@ class SimClassAgent(Agent):
         y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity+randomVariable)
         self.Sigmoid = sig(y,self.model.Nthreshold)
         self.neighbours = y
-        print('student Inattentiveness & Hyperactivity:',self.Inattentiveness,self.Hyperactivity)
-        print('the total of student parameters: ',y)
-        print('the value of random variable',randomVariable)
-        print('the result of sigmoid:',self.Sigmoid)
+        #print('student Inattentiveness & Hyperactivity:',self.Inattentiveness,self.Hyperactivity)
+        #print('the total of student parameters: ',y)
+        #print('the value of random variable',randomVariable)
+        #print('the result of sigmoid:',self.Sigmoid)
 
         propability = self.random.uniform(0.98, 1)
 
@@ -769,7 +782,7 @@ class SimClassAgent(Agent):
 class SimClass(Model):
 
 
-    def __init__(self, height=11, width=11, quality=1, Inattentiveness=0, control=3,Seating=1,State_Minutes=1, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3, NumberofGroups=2):
+    def __init__(self,data, key=1, height=11, width=11, quality=1, Inattentiveness=0, control=3,Seating=1,State_Minutes=1, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3, NumberofGroups=2):
 
         self.height = height
         self.width = width
@@ -795,12 +808,17 @@ class SimClass(Model):
         self.greenState = 0
         self.coords=[]
 
+
         #Load data
 
         #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
-        data = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
+
+        #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
+        #data = data
+        data = data_input(data,key)
 
         # Take agent variables from the data
+
         maths = data['Start_maths'].to_numpy()
         ability_zscore = stats.zscore(maths)
         Inattentiveness = data['Inattentiveness'].to_numpy()
@@ -813,6 +831,7 @@ class SimClass(Model):
         fsm = data['FSM'].to_numpy()
         id = data['ID'].to_numpy()
         IDACI = data['IDACI'].to_numpy()
+        Classroom_ID = data['Classroom_ID'].to_numpy()
         coords=[]
 
         # Set up agents
@@ -820,14 +839,15 @@ class SimClass(Model):
         counter = 0
  #       for cell in self.grid.coord_iter():
         for x in range(width):
-          print('x is ', x)
+          #print('x is ', x)
+          #print('size is', data.shape[0])
           if x % 4 == 0:
             continue
           for y in range(height):
             if y % 2 == 0:
              continue
 
-            if counter == 30:
+            if counter == data.shape[0]:
                 break
             #x,y =coordenates(width,height)
 
@@ -845,7 +865,7 @@ class SimClass(Model):
 
             # create agents form data
             agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter], Hyperactivity[counter],Impulsiveness[counter],
-                                  maths[counter],Start_Reading[counter],End_Reading[counter],Start_Vocabulary[counter],age[counter],fsm[counter],IDACI[counter], ability)
+                                  maths[counter],Start_Reading[counter],End_Reading[counter],Start_Vocabulary[counter],age[counter],fsm[counter],IDACI[counter], ability, Classroom_ID)
             # Place Agents on grid
             #x, y = self.grid.find_empty()
             self.grid.place_agent(agent, (x, y))
@@ -867,7 +887,7 @@ class SimClass(Model):
             agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id":"id",
                              "Hyperactivity": "Hyperactivity", "Start_maths": "Start_maths", "Start_Reading": "Start_Reading",
                              "End_maths": "End_maths", "End_Reading": "End_Reading","Start_Vocabulary":"Start_Vocabulary","Inattentiveness": "Inattentiveness","End_age":"age", "ability": "ability",
-                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours","disrubted":"disrubted"})
+                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours","disrubted":"disrubted","Classroom_ID":"Classroom_ID"})
 
         self.running = True
 

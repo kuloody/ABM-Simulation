@@ -2,6 +2,8 @@ from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.ModularVisualization import VisualizationElement
+import pandas as pd
+
 import numpy as np
 from model import SimClass
 
@@ -118,8 +120,10 @@ model_params = {
     "Inattentiveness": UserSettableParameter("slider", "Inattentiveness ", 1.0 , 0.00, 1.0, 1.0),
     "hyper_Impulsive": UserSettableParameter("slider", "Hyperactivity   ", 1.0 , 0.00, 1.0, 1.0),
     "AttentionSpan": UserSettableParameter("slider", "Attention Span", 5.0 , 0.00, 5.0, 1.0),
-     "Nthreshold": UserSettableParameter("slider", "Disruptive Range  ", 5.0 , 0.20, 1.0, 0.20),
-     "NumberofGroups": UserSettableParameter('choice', 'Number of Groups  ',3,choices=[3,2])
+     "Nthreshold": UserSettableParameter("slider", "Disruptive Range  ", 10.0 , 5.0, 15.0, 1.0),
+     "NumberofGroups": UserSettableParameter('choice', 'Number of Groups  ',3,choices=[3,2]),
+     "data" : pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
+
 
 }
 
