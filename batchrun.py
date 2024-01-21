@@ -9,13 +9,6 @@ from model import SimClass
 from mesa.batchrunner import BatchRunner
 df = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS+Classroon_ID.csv')
 df =df.dropna()
-path2 = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
-path3 = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/NewPIPS-SAMPLE.csv')
-
-path = [path3,path2]
-print(type(path3))
-print('Here is path3',path3)
-#print(path)
 data_dict = dict(tuple(df.groupby('Classroom_ID')))
 
 #new_dict = dict([(value, key) for key, value in pathArray.items()])
@@ -41,10 +34,6 @@ KeysList = list(data_dict.keys())
 # printing the resultant list of a dictionary keys
 #Test the tuples in batchrunner
 
-Test_tuple = ('Hi I am a test Tuple item 1', 'Hi I am a test Tuple item 2')
-Test_Dict = {0: ('Hi I am a test Tuple item 1'), 1:('Hi I am a test Tuple item 2')}
-result = Test_Dict.items()
-
 # Convert object to a list
 #data = list(result)
 fixed_params = {"width": 10,
@@ -59,7 +48,7 @@ fixed_params = {"width": 10,
                 "data":data_dict
 
                 }
-variable_params = { "key": KeysList}
+variable_params = { "quality":range(0, 6, 5)}
 #print(variable_params)
 batch_run = BatchRunner(SimClass,
                         variable_params,
@@ -78,4 +67,4 @@ batch_run = BatchRunner(SimClass,
 batch_run.run_all()
 data_collector_agents = batch_run.get_agent_vars_dataframe()
 #data_collector_model = batch_run.get_collector_model()
-data_collector_agents.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-120/Simulation-BtchRun-NthresholdTest5-15-allruns.csv')
+data_collector_agents.to_csv('/home/zsrj52/Downloads/SimClass/Simulations-120/Simulation-BtchRun-Gamification2.csv')
