@@ -113,7 +113,7 @@ rightChart = RightPanelElement()
 model_params = {
     "height": 10,
     "width": 10,
-    "quality": UserSettableParameter("slider", "Teaching quality", 5.0 , 0.00, 5.0, 1.0),
+    "gamification_element": UserSettableParameter("slider", "gamification element", 5.0 , 0.00, 5.0, 1.0),
     "control": UserSettableParameter("slider", "Teacher Control", 5.0 , 0.00, 5.0, 1.0),
     "Seating" : UserSettableParameter("slider", "Change Seats Every Lesson ", 1.0 , 0.00, 1.0, 1.0),
     "State_Minutes" : UserSettableParameter("slider", "Minutes of Change State ", 5.0 , 1.00, 5.0, 1.0),
