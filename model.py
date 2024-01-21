@@ -1,7 +1,7 @@
 import random
-#import jenkspy
+# import jenkspy
 import pymc3 as pm
-from  random import shuffle
+from random import shuffle
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import SingleGrid
@@ -19,48 +19,52 @@ import joblib
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 from DataBreak import *
-desired_width=320
+
+desired_width = 320
 
 pd.set_option('display.width', desired_width)
 
 np.set_printoptions(linewidth=desired_width)
 
-pd.set_option('display.max_columns',20)
+pd.set_option('display.max_columns', 20)
 from sklearn.model_selection import train_test_split
 
 # defining the sigmoid function
 import numpy as np
-#Define Sigmoid function
-def sig(x,a):
- a=(a/2)
- return 1/(1 + np.exp(-x))-a
- 
-#For Batchrun Group Classes
+
+
+# Define Sigmoid function
+def sig(x, a):
+    a = (a / 2)
+    return 1 / (1 + np.exp(-x)) - a
+
+
 def data_input(data, key):
-    print('Here is the data type',type(data))
+    print('Here is the data type', type(data))
     if type(data) is dict:
         ExtractedData = data[key]
         print('Here is the Exctracted dict item', ExtractedData)
- #       for item in data.values():
- #           ExtractedData = (item[:])
+    #       for item in data.values():
+    #           ExtractedData = (item[:])
     else:
-       ExtractedData = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
+        ExtractedData = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
 
     return ExtractedData
 
 
-#Define seating arrangment function
-def coordenates(x,y):
-    x, y = x,y
+# Define seating arrangment function
+def coordenates(x, y):
+    x, y = x, y
     if x % 4 == 0:
-        #print('this is the coordenates function x, y is:',x,y)
-        #coordenates(model)
-        x+=1
+        # print('this is the coordenates function x, y is:',x,y)
+        # coordenates(model)
+        x += 1
         if x == 10:
-            y+=1
-            x= 0
-        #coordenates(model)
+            y += 1
+            x = 0
+        # coordenates(model)
     return x, y
+
 
 def spaceCoordenates(height, width):
     gridSize = height * width
@@ -68,21 +72,22 @@ def spaceCoordenates(height, width):
     spaceSeats = []
 
     for x in range(width):
-          #print('x is ', x)
-          if x % 4 == 0:
+        # print('x is ', x)
+        if x % 4 == 0:
             for y in range(height):
-             if y % 2 == 0:
-              spaceSeats.append((x,y))
+                if y % 2 == 0:
+                    spaceSeats.append((x, y))
 
-          if counter == gridSize:
-                break
+        if counter == gridSize:
+            break
 
     return spaceSeats
-def seating(model):
 
+
+def seating(model):
     spaceSeats = spaceCoordenates(model.height, model.width)
     x, y = model.grid.find_empty()
-    coordenates = x,y
+    coordenates = x, y
     for items in spaceSeats:
         if coordenates == items:
             seating(model)
@@ -90,26 +95,29 @@ def seating(model):
             return coordenates
 
 
-#Defining shuffle function for agent position change
+# Defining shuffle function for agent position change
 def shuffle_pos(list):
     shuffled_list = list.copy()
     shuffle(shuffled_list)
     return shuffled_list
+
+
 def updateSeating(model):
     coords = []
     for agent in model.schedule.agents:
-     coords.append(agent.pos)
-    shuffled_coords=shuffle_pos(coords)
+        coords.append(agent.pos)
+    shuffled_coords = shuffle_pos(coords)
 
-    for agent, i in zip (model.schedule.agents, shuffled_coords):
-         model.grid.remove_agent(agent)
-         agent.pos = i
-
+    for agent, i in zip(model.schedule.agents, shuffled_coords):
+        model.grid.remove_agent(agent)
+        agent.pos = i
 
     for agent in model.schedule.agents:
         model.grid.place_agent(agent, agent.pos)
-  #  for agent in model.schedule.agents:
- #       x, y = seating(model)
+
+
+#  for agent in model.schedule.agents:
+#       x, y = seating(model)
 #        model.grid.place_agent(agent, (x, y))
 
 
@@ -118,23 +126,23 @@ def compute_ave(model):
     x = sum(agent_maths)
     N = len(agent_maths)
     B = x / N
-    #print('the AVARAGE of end math', B, agent_maths)
+    # print('the AVARAGE of end math', B, agent_maths)
     return B
 
 
 def compute_ave_disruptive(model):
     agent_disruptiveTend = [agent.disruptiveTend for agent in model.schedule.agents]
-    #print('Calculate disrubtive tend original', agent_disruptiveTend)
+    # print('Calculate disrubtive tend original', agent_disruptiveTend)
     # B = statistics.mean(agent_disruptiveTend)
     B = np.mean(agent_disruptiveTend)
-    #print('Calculate disrubtive tend after mean', agent_disruptiveTend)
-    #print('the AVARAGE of disruptive', B, agent_disruptiveTend)
+    # print('Calculate disrubtive tend after mean', agent_disruptiveTend)
+    # print('the AVARAGE of disruptive', B, agent_disruptiveTend)
     return B
 
 
 def compute_zscore(model, x):
     agent_Inattentiveness = [agent.Inattentiveness for agent in model.schedule.agents]
-    #print('Calculate variance', agent_Inattentiveness)
+    # print('Calculate variance', agent_Inattentiveness)
     SD = stdev(agent_Inattentiveness)
     mean = statistics.mean(agent_Inattentiveness)
     zscore = (x - mean) / SD
@@ -143,7 +151,7 @@ def compute_zscore(model, x):
 
 def compute_SD(model, x):
     agent_disruptiveTend = [agent.disruptiveTend for agent in model.schedule.agents]
-    #print('Calculate variance', agent_disruptiveTend)
+    # print('Calculate variance', agent_disruptiveTend)
     b = [float(s) for s in agent_disruptiveTend]
     SD = stdev(b)
     mean = statistics.mean(b)
@@ -153,9 +161,8 @@ def compute_SD(model, x):
     else:
         return 0
 
-#normalize agent ability variable
-def normal(agent_ability, x):
 
+def normal(agent_ability, x):
     minValue = min(agent_ability)
     maxValue = max(agent_ability)
     rescale = (x - minValue) / maxValue - minValue
@@ -176,22 +183,23 @@ def gen_random():
     arr2[args[-70:-1]] -= int(intg)
     arr2[args[-1]] -= int(np.round(decm * 69))
     return np.concatenate((arr1, mid, arr2))
- 
-#Prediction using LR pre-trained model
-def predictioin(features):
 
+
+def predictioin(features):
     data = pd.read_csv('/home/zsrj52/Downloads/SimClass/SimClassDataClassificationGrowthRateType3.csv')
     dataConvert = data.to_numpy()
-    X = dataConvert[:,[2,4,5]]
-    y = dataConvert[:,20]
+    X = dataConvert[:, [2, 4, 5]]
+    y = dataConvert[:, 20]
     model = LinearRegression()
     model.fit(X, y)
     y_pred = model.predict(features)
     return y_pred
 
+
 class SimClassAgent(Agent):
     # 1 Initialization
-    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, Impulsiveness, math,Start_Reading,End_Reading,Start_Vocabulary,age,fsm, IDACI,  ability,Classroom_ID):
+    def __init__(self, pos, model, agent_type, id, Inattentiveness, Hyperactivity, Impulsiveness, math, Start_Reading,
+                 End_Reading, Start_Vocabulary, age, fsm, IDACI, ability, Classroom_ID):
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
@@ -201,7 +209,7 @@ class SimClassAgent(Agent):
         self.Impulsiveness = Impulsiveness
         self.Start_maths = math
         self.End_maths = math
-        self.Start_Reading=Start_Reading
+        self.Start_Reading = Start_Reading
         self.End_Reading = End_Reading
         self.Start_Vocabulary = Start_Vocabulary
         self.age = age
@@ -212,30 +220,27 @@ class SimClassAgent(Agent):
         self.Classroom_ID = Classroom_ID
 
         self.agent_state = self.random.randint(2, 8)
-        #self.agent_random = random.random()
+        # self.agent_random = random.random()
         self.greenState = 0
         self.redState = 0
         self.yellowState = 0
         self.disrubted = 0
         self.countLearning = 0
         self.disruptiveTend = Inattentiveness
-        #Adding neighbours and Sigmoid
+        # Adding neighbours and Sigmoid
         self.neighbours = 0
         self.Sigmoid = 0
         self.minute_counter = 0
 
-        #Create Array of agent features
+        # Create Array of agent features
         self.agentAttr = np.array([self.Start_maths, self.Inattentiveness, self.Hyperactivity])
         self.agentAttr = self.agentAttr.reshape((1, -1))
         self.growthRate = predictioin(self.agentAttr)
         self.singleValueGrowth = float(self.growthRate[0])
 
-        #load the trained model for prediction
-        #loaded_model = pickle.load(open('/home/zsrj52/PycharmProjects/SimClass/prediction_model.sav', 'rb'))
-        #self.growth_pred = loaded_model.predict(self.agentAttr.tolist()).tolist()
-
-
-
+        # load the trained model for prediction
+        # loaded_model = pickle.load(open('/home/zsrj52/PycharmProjects/SimClass/prediction_model.sav', 'rb'))
+        # self.growth_pred = loaded_model.predict(self.agentAttr.tolist()).tolist()
 
     def neighbour(self):
         neighbourCount = 0
@@ -255,24 +260,23 @@ class SimClassAgent(Agent):
 
     def step(self):
 
-        print('Step number:',self.model.schedule.steps)
-        #print('Count learning value:', self.countLearning)
-        #print('Agent position', self.pos)
-        #print('check agent vars',self.model.datacollector.get_agent_vars_dataframe())
+        print('Step number:', self.model.schedule.steps)
+        # print('Count learning value:', self.countLearning)
+        # print('Agent position', self.pos)
+        # print('check agent vars',self.model.datacollector.get_agent_vars_dataframe())
         self.stateCurrent()
         '''''
-        #Change agent state per defined minutes
         if self.minute_counter ==self.model.State_Minutes:
             self.stateCurrent()
-            print('#slider',self.model.State_Minutes)
-            print('self.model.minute_counter',self.minute_counter)
+            print('#################################################################slider',self.model.State_Minutes)
+            print('#################################################################self.model.minute_counter',self.minute_counter)
             self.minute_counter = 0
         '''''
 
-        #print('self.model.minute_counter',self.minute_counter)
-        self.minute_counter +=1
-        if self.type==1:
-           self.Green_State()
+        # print('self.model.minute_counter',self.minute_counter)
+        self.minute_counter += 1
+        if self.type == 1:
+            self.Green_State()
         if self.type == 2:
             self.Yellow_State()
         if self.type == 3:
@@ -280,26 +284,33 @@ class SimClassAgent(Agent):
 
         return
 
-# defineing a unified state function
+    # defineing a unified state function
     def stateCurrent(self):
         count, red, yellow, green = self.neighbour()
         randomVariable = self.random.uniform(-1, 1)
+        Gamification = self.random.uniform(0, self.model.gamification_element)
+        Gamification_effect = self.random.uniform(5, 15)
 
-        y = (red+yellow-green+self.type+self.Inattentiveness+self.Hyperactivity+randomVariable)
-        self.Sigmoid = sig(y,self.model.Nthreshold)
-        self.neighbours = y
-        #print('student Inattentiveness & Hyperactivity:',self.Inattentiveness,self.Hyperactivity)
-        #print('the total of student parameters: ',y)
-        #print('the value of random variable',randomVariable)
-        #print('the result of sigmoid:',self.Sigmoid)
+        # Check if student is disruptive for start of gamification element effect
+        if self.Hyperactivity > 0:
+            if self.model.schoolDay > Gamification_effect:
+                y = (
+                            red + yellow - green + self.type + self.Inattentiveness + self.Hyperactivity + randomVariable + Gamification)
+            else:
+                y = (red + yellow - green + self.type + self.Inattentiveness + self.Hyperactivity + randomVariable)
+        else:
+            y = (
+                        red + yellow - green + self.type + self.Inattentiveness + self.Hyperactivity + randomVariable + Gamification)
+        self.Sigmoid = sig(y, self.model.Nthreshold)
+        # self.neighbours = y
 
         propability = self.random.uniform(0.98, 1)
 
-        #if x < self.model.Nthreshold:
+        # if x < self.model.Nthreshold:
         if y <= self.model.Nthreshold:
 
-            #if self.Sigmoid <= 0.6:
-                #print( 'the value of SIgmoid is $',self.Sigmoid,y )
+            # if self.Sigmoid <= 0.6:
+            # print( 'the value of SIgmoid is $',self.Sigmoid,y )
             self.type = 1
             self.model.learning += 1
             self.countLearning += 1
@@ -308,7 +319,7 @@ class SimClassAgent(Agent):
             self.yellowState = 0
             self.greenState += 1
             return 1
-        else :
+        else:
             if self.Impulsiveness == 0:
                 self.type = 2
                 self.disrubted += 0.5
@@ -318,10 +329,10 @@ class SimClassAgent(Agent):
                 self.greenState = 0
                 self.set_start_math()
                 Intercept = 1
-                #self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/50
+                # self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/50
 
                 return 1
-            else :
+            else:
                 self.type = 3
                 self.model.distruptive += 1
                 self.countLearning += 0.1
@@ -331,37 +342,38 @@ class SimClassAgent(Agent):
                 self.greenState = 0
                 self.set_start_math()
                 Intercept = 1
-                #self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/80
+                # self.End_maths = (3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + -0.01 * self.Inattentiveness + 0.81 * self.age + self.random.randint(-1, 0)+self.ability)/80
 
             return 1
+
     def Green_State(self):
-                self.type = 1
-                self.model.learning += 1
-                self.countLearning += 1
-                self.set_start_math()
-                self.redState = 0
-                self.yellowState = 0
-                self.greenState += 1
-                return 1
+        self.type = 1
+        self.model.learning += 1
+        self.countLearning += 1
+        self.set_start_math()
+        self.redState = 0
+        self.yellowState = 0
+        self.greenState += 1
+        return 1
 
     def Yellow_State(self):
-                self.type = 2
-                self.disrubted += 0.5
-                self.countLearning += 0.3
-                self.redState = 0
-                self.yellowState += 1
-                self.greenState = 0
-                self.set_start_math()
+        self.type = 2
+        self.disrubted += 0.5
+        self.countLearning += 0.3
+        self.redState = 0
+        self.yellowState += 1
+        self.greenState = 0
+        self.set_start_math()
 
     def Red_State(self):
-            self.type = 3
-            self.model.distruptive += 1
-            self.countLearning += 0.1
-            self.disrubted += 1
-            self.redState += 1
-            self.yellowState = 0
-            self.greenState = 0
-            self.set_start_math()
+        self.type = 3
+        self.model.distruptive += 1
+        self.countLearning += 0.1
+        self.disrubted += 1
+        self.redState += 1
+        self.yellowState = 0
+        self.greenState = 0
+        self.set_start_math()
 
     def redStateCange(self):
         count, red, yellow, green = self.neighbour()
@@ -375,14 +387,14 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if red > self.agent_state  and self.disruptiveTend > compute_ave_disruptive(self.model):
+        if red > self.agent_state and self.disruptiveTend > compute_ave_disruptive(self.model):
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
-        # if Inattentiveness is on and quality is low
-        if self.model.Inattentiveness == 1 and self.model.quality <= self.agent_state + 1 and self.Inattentiveness > self.agent_state:
+        # if Inattentiveness is on and gamification_element is low
+        if self.model.Inattentiveness == 1 and self.model.gamification_element <= self.agent_state + 1 and self.Inattentiveness > self.agent_state:
             self.type = 3
             self.model.distruptive += 1
             self.disrubted += 1
@@ -408,7 +420,7 @@ class SimClassAgent(Agent):
             self.yellowState = 0
             self.greenState = 0
             return 1
-        if (self.model.control or self.model.quality) < self.agent_state and self.Hyperactivity > self.agent_state:
+        if (self.model.control or self.model.gamification_element) < self.agent_state and self.Hyperactivity > self.agent_state:
             self.type = 3
             self.model.distruptive += 1
             self.disrubted += 1
@@ -417,18 +429,16 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-
-
     def yellowStateCange(self):
 
         count, red, yellow, green = self.neighbour()
-        if self.model.Inattentiveness == 1 and self.model.quality >= self.agent_state and self.Inattentiveness <= self.agent_state:
+        if self.model.Inattentiveness == 1 and self.model.gamification_element >= self.agent_state and self.Inattentiveness <= self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
-        #student is disruptive but inattintiveness is off
+        # student is disruptive but inattintiveness is off
         if self.model.Inattentiveness == 0 and self.Inattentiveness > self.agent_state:
             self.type = 2
             self.redState = 0
@@ -442,7 +452,7 @@ class SimClassAgent(Agent):
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if self.model.quality > self.agent_state and self.Inattentiveness > self.agent_state:
+        if self.model.gamification_element > self.agent_state and self.Inattentiveness > self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
@@ -466,8 +476,6 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-
-
         # Change state based on majority of neighbours' color and agent's current color state
 
     @property
@@ -484,50 +492,50 @@ class SimClassAgent(Agent):
             self.greenState += 1
             return 1
 
-
-        #if self.model.Inattentiveness != 0 or self.model.quality <= self.agent_state or self.Inattentiveness >= self.agent_state:
-        if self.model.Inattentiveness == 0 and self.model.quality > self.agent_state:
-                self.type = 1
-                self.model.learning += 1
-                self.set_start_math()
-                self.redState = 0
-                self.yellowState = 0
-                self.greenState += 1
-                return 1
+        # if self.model.Inattentiveness != 0 or self.model.gamification_element <= self.agent_state or self.Inattentiveness >= self.agent_state:
+        if self.model.Inattentiveness == 0 and self.model.gamification_element > self.agent_state:
+            self.type = 1
+            self.model.learning += 1
+            self.set_start_math()
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState += 1
+            return 1
 
         if self.model.hyper_Impulsive == 0 and self.model.control > self.agent_state >= self.Hyperactivity:
-                self.type = 1
-                self.model.learning += 1
-                self.set_start_math()
-                self.redState = 0
-                self.yellowState = 0
-                self.greenState += 1
-                return 1
+            self.type = 1
+            self.model.learning += 1
+            self.set_start_math()
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState += 1
+            return 1
 
-        if self.model.hyper_Impulsive == 0 and self.agent_state >= self.Hyperactivity and self.model.quality > self.agent_state:
-                self.type = 1
-                self.model.learning += 1
-                self.set_start_math()
-                self.redState = 0
-                self.yellowState = 0
-                self.greenState += 1
-                return 1
+        if self.model.hyper_Impulsive == 0 and self.agent_state >= self.Hyperactivity and self.model.gamification_element > self.agent_state:
+            self.type = 1
+            self.model.learning += 1
+            self.set_start_math()
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState += 1
+            return 1
         if self.type == 2 and self.Inattentiveness <= self.agent_state:
-                self.type = 1
-                self.model.learning += 1
-                self.set_start_math()
-                self.redState = 0
-                self.yellowState = 0
-                self.greenState += 1
-                return 1
-        #return
-      #  self.type = 1
-      #  self.model.learning += 1
-      #  self.set_start_math()
-     #   self.redState = 0
-      #  self.yellowState = 0
-     #   self.greenState += 1
-      #  return 1
+            self.type = 1
+            self.model.learning += 1
+            self.set_start_math()
+            self.redState = 0
+            self.yellowState = 0
+            self.greenState += 1
+            return 1
+        # return
+
+    #  self.type = 1
+    #  self.model.learning += 1
+    #  self.set_start_math()
+    #   self.redState = 0
+    #  self.yellowState = 0
+    #   self.greenState += 1
+    #  return 1
 
     def neighbourState(self):
         count, red, yellow, green = self.neighbour()
@@ -545,7 +553,7 @@ class SimClassAgent(Agent):
         colour = max(Pturn_red, Pturn_green, Pturn_yellow)
         if Pturn_red == colour:
             self.type = 3
-            #self.model.distruptive += 1
+            # self.model.distruptive += 1
             return
         if Pturn_yellow == colour:
             self.type = 2
@@ -558,8 +566,8 @@ class SimClassAgent(Agent):
 
     def changeState(self):
 
-        # Change to attentive (green) teaching quality or control is high and state is passive for long
-        if (self.model.quality or self.model.control) > self.agent_state and self.yellowState >= self.agent_state:
+        # Change to attentive (green) teaching gamification_element or control is high and state is passive for long
+        if (self.model.gamification_element or self.model.control) > self.agent_state and self.yellowState >= self.agent_state:
             self.type = 1
             self.redState = 0
             self.yellowState = 0
@@ -594,14 +602,14 @@ class SimClassAgent(Agent):
             self.greenState = 0
             return 1
 
-        if self.Inattentiveness < self.agent_state < self.redState and self.model.quality <= self.agent_state:
+        if self.Inattentiveness < self.agent_state < self.redState and self.model.gamification_element <= self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
 
-        if self.Inattentiveness < self.agent_state and self.model.quality <= self.agent_state and self.yellowState > self.agent_state:
+        if self.Inattentiveness < self.agent_state and self.model.gamification_element <= self.agent_state and self.yellowState > self.agent_state:
             self.type = 1
             self.redState = 0
             self.yellowState = 0
@@ -611,21 +619,21 @@ class SimClassAgent(Agent):
 
             return 1
 
-        if self.Inattentiveness > self.agent_state and self.model.quality > self.agent_state and self.redState > self.agent_state:
+        if self.Inattentiveness > self.agent_state and self.model.gamification_element > self.agent_state and self.redState > self.agent_state:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
 
-        if self.Hyperactivity > self.agent_state - 1 and self.model.control > self.agent_state - 1 and self.redState > self.agent_state-1:
+        if self.Hyperactivity > self.agent_state - 1 and self.model.control > self.agent_state - 1 and self.redState > self.agent_state - 1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
 
-        if (self.model.control and self.model.quality) > self.agent_state and self.redState > self.agent_state:
+        if (self.model.control and self.model.gamification_element) > self.agent_state and self.redState > self.agent_state:
             self.type = 1
             if self.model.distruptive > 0:
                 self.model.distruptive -= 1
@@ -636,19 +644,19 @@ class SimClassAgent(Agent):
             self.set_start_math()
             return 1
 
-        if self.Hyperactivity <= self.agent_state and self.model.quality <= self.agent_state and self.redState > self.agent_state -1:
+        if self.Hyperactivity <= self.agent_state and self.model.gamification_element <= self.agent_state and self.redState > self.agent_state - 1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if self.Hyperactivity <= self.agent_state - 1 and self.redState > self.agent_state -1:
+        if self.Hyperactivity <= self.agent_state - 1 and self.redState > self.agent_state - 1:
             self.type = 2
             self.redState = 0
             self.yellowState += 1
             self.greenState = 0
             return 1
-        if self.Inattentiveness < self.agent_state and self.redState > self.agent_state -1:
+        if self.Inattentiveness < self.agent_state and self.redState > self.agent_state - 1:
             self.type = 2
             self.disrubted += 1
             self.redState = 0
@@ -666,14 +674,11 @@ class SimClassAgent(Agent):
             self.set_start_math()
             return 1
 
-
-
-
     def set_start_math(self):
         # Increment the learning counter
-        #self.countLearning += 1
-        #Transform the disrupted counter
-        Disrupted= self.disrubted * self.random.uniform(0.00,0.002)
+        # self.countLearning += 1
+        # Transform the disrupted counter
+        Disrupted = self.disrubted * self.random.uniform(0.00, 0.002)
         Intercept = 1
         MaxScore = 69
         # Evalue = MaxScore /ln 8550
@@ -682,35 +687,35 @@ class SimClassAgent(Agent):
         Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / Evalue)
         total_learn = self.countLearning + Scaled_Smath
         end_maths = (Evalue * math.log(total_learn))
-        #self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + (-0.01 * self.Inattentiveness) + 0.81 * self.age #+ self.random.randint(-1, 0)#+self.ability
-        #self.End_maths = (7.621204857 * math.log(end_maths))
-        #self.End_maths = self.BayModel()
+        # self.End_maths = 3.33 * Intercept + 0.43 * self.Start_maths + 0.10 * self.Start_Reading + 0.45 * self.Start_Vocabulary + (-0.01 * self.Inattentiveness) + 0.81 * self.age #+ self.random.randint(-1, 0)#+self.ability
+        # self.End_maths = (7.621204857 * math.log(end_maths))
+        # self.End_maths = self.BayModel()
         self.End_maths = self.LinearRegressionModel() - Disrupted + self.random.randint(-2, 2)
-
 
         # Scale Smath before using it to calculate end math score
         # 8550t = 7.621204857 for the scale of 69
         # 8550t =
-        #random () generates a float number between 1 nd 0 of a normal distribution
+        # random () generates a float number between 1 nd 0 of a normal distribution
 
-        #Old scale math:
+        # Old scale math:
         Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / 7.621204857)
         total_learn = self.countLearning + Scaled_Smath
-        #self.End_maths = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
-        #self.End_maths = self.Start_maths * (1.001275 ** self.countLearning) #old growthrate
+        # self.End_maths = (7.621204857 * math.log(total_learn)) + self.ability #learn minutes transfer formula
+        # self.End_maths = self.Start_maths * (1.001275 ** self.countLearning) #old growthrate
         MaxGainedScore = 69 - self.Start_maths
-        n= math.log(MaxGainedScore)/math.log(8550)
-        #Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / n)
-        #self.End_maths = (self.countLearning ** n) + self.Start_maths
+        n = math.log(MaxGainedScore) / math.log(8550)
+        # Scaled_Smath = (2.718281828 ** self.Start_maths) ** (1 / n)
+        # self.End_maths = (self.countLearning ** n) + self.Start_maths
         if self.fsm == 1:
             fsmVariable = self.random.randint(-1, 0)
         else:
             fsmVariable = self.random.randint(0, 1)
 
-        #Formula from Baysian regrission
-    def BayModel (self):
+        # Formula from Baysian regrission
+
+    def BayModel(self):
         with open('/home/zsrj52/Downloads/SimClass/LinearModel.sav', 'rb') as buff:
-                data = pickle.load(buff)
+            data = pickle.load(buff)
         model = data['model']
         trace = data['trace']
         X_shared = data['X_train']
@@ -729,10 +734,10 @@ class SimClassAgent(Agent):
         sd_value = var_weights['sd'].mean()
 
         # Actual Value
-        data = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age]
-        test_observation =pd.DataFrame(data)
+        data = [self.Start_maths, self.Start_Reading, self.Start_Vocabulary, self.Inattentiveness, self.age]
+        test_observation = pd.DataFrame(data)
 
-        print('test observation',test_observation)
+        print('test observation', test_observation)
 
         # Align weights and test observation
         var_weights = var_weights[test_observation.index]
@@ -742,30 +747,30 @@ class SimClassAgent(Agent):
 
         # Location of mean for observation
         mean_loc = np.dot(var_means, test_observation)
-            # Location of mean for observation
+        # Location of mean for observation
         mean_loc = np.dot(var_means, test_observation)
 
         # Estimates of grade
-        estimates = np.random.normal(loc = mean_loc, scale = sd_value,
-                                 size = 1000)
+        estimates = np.random.normal(loc=mean_loc, scale=sd_value,
+                                     size=1000)
         return estimates
 
-
-        #self.End_maths = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.Inattentiveness)
-        #self.End_maths = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.Inattentiveness) + self.random.randint(0, 1) + fsmVariable
+        # self.End_maths = (self.s_math * (1.00008851251853 ** self.countLearning)) * self.ability #- compute_zscore(self.model,self.Inattentiveness)
+        # self.End_maths = (self.s_math * (self.singleValueGrowth ** self.countLearning)) * self.ability - compute_zscore(self.model,self.Inattentiveness) + self.random.randint(0, 1) + fsmVariable
 
     def LinearRegressionModel(self):
         # load the model from disk
         filename = '/home/zsrj52/Downloads/SimClass/LinearModel.sav'
         loaded_model = pickle.load(open(filename, 'rb'))
-        #9 Features
-        #Pdata = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age,self.Start_Vocabulary,self.fsm,self.IDACI,self.Impulsiveness]
-        Pdata = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age]
+        # 9 Features
+        # Pdata = [self.Start_maths,self.Start_Reading,self.Start_Vocabulary,self.Inattentiveness,self.age,self.Start_Vocabulary,self.fsm,self.IDACI,self.Impulsiveness]
+        Pdata = [self.Start_maths, self.Start_Reading, self.Start_Vocabulary, self.Inattentiveness, self.age]
         Pdata = np.array(Pdata)
         pred = loaded_model.predict(Pdata.reshape(1, -1))
-        #pred = pred.astype(int)
-        print('Linear Regrission Prediction', pred[0],type(pred))
+        # pred = pred.astype(int)
+        print('Linear Regrission Prediction', pred[0], type(pred))
         return pred[0]
+
     def get_type(self):
         return self.type
 
@@ -781,15 +786,14 @@ class SimClassAgent(Agent):
                 self.countLearning / self.model.schedule.steps)) + self.initialDisrubtiveTend)
 
 
-
 class SimClass(Model):
 
-
-    def __init__(self,data, key=1, height=11, width=11, quality=1, Inattentiveness=0, control=3,Seating=1,State_Minutes=1, hyper_Impulsive=0, AttentionSpan=0, Nthreshold = 3, NumberofGroups=2):
+    def __init__(self, data, key=1, height=11, width=11, gamification_element=1, Inattentiveness=0, control=3, Seating=1,
+                 State_Minutes=1, hyper_Impulsive=0, AttentionSpan=0, Nthreshold=3, NumberofGroups=2):
 
         self.height = height
         self.width = width
-        self.quality = quality
+        self.gamification_element = gamification_element
         self.Inattentiveness = Inattentiveness
         self.control = control
         self.hyper_Impulsive = hyper_Impulsive
@@ -809,16 +813,15 @@ class SimClass(Model):
         self.redState = 0
         self.yellowState = 0
         self.greenState = 0
-        self.coords=[]
+        self.coords = []
 
+        # Load data
 
-        #Load data
+        # data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
 
-        #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/DataSampleNochange.csv')
-
-        #data = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
-        #data = data
-        data = data_input(data,key)
+        # data = pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
+        # data = data
+        data = data_input(data, key)
 
         # Take agent variables from the data
 
@@ -835,48 +838,49 @@ class SimClass(Model):
         id = data['ID'].to_numpy()
         IDACI = data['IDACI'].to_numpy()
         Classroom_ID = data['Classroom_ID'].to_numpy()
-        coords=[]
+        coords = []
 
         # Set up agents
 
         counter = 0
- #       for cell in self.grid.coord_iter():
+        #       for cell in self.grid.coord_iter():
         for x in range(width):
-          #print('x is ', x)
-          #print('size is', data.shape[0])
-          if x % 4 == 0:
-            continue
-          for y in range(height):
-            if y % 2 == 0:
-             continue
+            # print('x is ', x)
+            # print('size is', data.shape[0])
+            if x % 4 == 0:
+                continue
+            for y in range(height):
+                if y % 2 == 0:
+                    continue
 
-            if counter == data.shape[0]:
-                break
-            #x,y =coordenates(width,height)
+                if counter == data.shape[0]:
+                    break
+                # x,y =coordenates(width,height)
 
-            #x = cell[1]
-            #y = cell[2]
+                # x = cell[1]
+                # y = cell[2]
 
-            #Place agents in different postions each run
- #           x, y = self.grid.find_empty()
+                # Place agents in different postions each run
+                #           x, y = self.grid.find_empty()
 
+                # Initial State for all student is random
+                agent_type = self.random.randint(1, 3)
+                #            ability = ability_zscore[counter]
+                ability = normal(ability_zscore, ability_zscore[counter])
 
-            # Initial State for all student is random
-            agent_type = self.random.randint(1, 3)
-#            ability = ability_zscore[counter]
-            ability = normal(ability_zscore, ability_zscore[counter])
-
-            # create agents form data
-            agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter], Hyperactivity[counter],Impulsiveness[counter],
-                                  maths[counter],Start_Reading[counter],End_Reading[counter],Start_Vocabulary[counter],age[counter],fsm[counter],IDACI[counter], ability, Classroom_ID)
-            # Place Agents on grid
-            #x, y = self.grid.find_empty()
-            self.grid.place_agent(agent, (x, y))
-            coords.append([x,y])
-            print('agent pos:', x, y)
-            self.schedule.add(agent)
-            counter += 1
-
+                # create agents form data
+                agent = SimClassAgent((x, y), self, agent_type, id[counter], Inattentiveness[counter],
+                                      Hyperactivity[counter], Impulsiveness[counter],
+                                      maths[counter], Start_Reading[counter], End_Reading[counter],
+                                      Start_Vocabulary[counter], age[counter], fsm[counter], IDACI[counter], ability,
+                                      Classroom_ID)
+                # Place Agents on grid
+                # x, y = self.grid.find_empty()
+                self.grid.place_agent(agent, (x, y))
+                coords.append([x, y])
+                print('agent pos:', x, y)
+                self.schedule.add(agent)
+                counter += 1
 
         # Collecting data while running the model
         self.datacollector = DataCollector(
@@ -887,33 +891,33 @@ class SimClass(Model):
                              "disruptiveTend": compute_ave_disruptive
                              },
             # Model-level count of learning agent
-            agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id":"id",
-                             "Hyperactivity": "Hyperactivity", "Start_maths": "Start_maths", "Start_Reading": "Start_Reading",
-                             "End_maths": "End_maths", "End_Reading": "End_Reading","Start_Vocabulary":"Start_Vocabulary","Inattentiveness": "Inattentiveness","End_age":"age", "ability": "ability",
-                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid":"Sigmoid", "neighbours":"neighbours","disrubted":"disrubted","Classroom_ID":"Classroom_ID"})
+            agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1], "id": "id",
+                             "Hyperactivity": "Hyperactivity", "Start_maths": "Start_maths",
+                             "Start_Reading": "Start_Reading",
+                             "End_maths": "End_maths", "End_Reading": "End_Reading",
+                             "Start_Vocabulary": "Start_Vocabulary", "Inattentiveness": "Inattentiveness",
+                             "End_age": "age", "ability": "ability",
+                             "LearningTime": "countLearning", "disruptiveTend": "disruptiveTend", "Sigmoid": "Sigmoid",
+                             "neighbours": "neighbours", "disrubted": "disrubted", "Classroom_ID": "Classroom_ID"})
 
         self.running = True
 
     def step(self):
 
-
         self.learning = 0  # Reset counter of learing and disruptive agents
         self.distruptive = 0
         Daycounter = self.schedule.time
-        self.daycounter+=1
-
+        self.daycounter += 1
 
         if self.daycounter == 45:
-            self.schoolDay +=1
+            self.schoolDay += 1
             self.daycounter = 0
-            if self.Seating == 1 :
-             updateSeating(self)
-
-
+            if self.Seating == 1:
+                updateSeating(self)
 
         self.datacollector.collect(self)
         self.schedule.step()
-        Daycounter =+1
+        Daycounter = +1
 
         # collect data
         self.datacollector.collect(self)
