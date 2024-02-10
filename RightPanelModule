@@ -1,16 +1,15 @@
-
 var RightPanelModule = function() {
-	var tag = "<div class='well' style='margin-top:10px;float:right;clear:right'></div>";
-	var div = $(tag)[0];
+    var tag = "<div class='well' style='margin-top:100px; margin-left:10px; position: fixed; top: 100px; right: 50px;'></div>";
+    var div = $(tag)[0];
 
-	// Append text tag to #elements:
-	$("#elements").append(div);
+    // Append text tag to #elements:
+    $("#elements").append(div);
 
-	this.render = function(data) {
-		$(div).html(data);
-	};
+    this.render = function(data) {
+        $(div).html(data);
+    };
 
-	this.reset = function() {
-		$(div).html("");
-	};
+    this.reset = function() {
+        $(div).html("");
+    };
 };

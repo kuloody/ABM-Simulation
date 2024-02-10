@@ -3,27 +3,9 @@ from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.ModularVisualization import VisualizationElement
 import pandas as pd
-
 import numpy as np
 from model import SimClass
-
-
-class RightPanelElement(VisualizationElement):
-    local_includes = ["RightPanelModule"]
-    #js_code = "elements.push(new RightPanelModule());"
-    def __init__(self):
-        new_element = "new RightPanelModule()"
-        self.js_code = "elements.push(" + new_element + ");"
-
-    def render(self, model):
-        return f"""
-<h4 style="margin-top:0">Model Variables</h4>
-<table>
-    <tr><td style="padding: 5px;">Learning Students :</td><td style="padding: 5px;">{model.learning:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Disruptive Students :</td><td style="padding: 5px;">{model.distruptive:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Current school day </td><td style="padding: 5px;">{model.schoolDay}</td></tr>
-</table>
-"""
+from panel_template import RightPanelElement
 
 class HistogramModule(VisualizationElement):
     package_includes = ["Chart.min.js"]
@@ -38,44 +20,46 @@ class HistogramModule(VisualizationElement):
                                          canvas_width,
                                          canvas_height)
         self.js_code = "elements.push(" + new_element + ");"
+
     def render(self, model):
-     agent_maths = [agent.Start_maths for agent in model.schedule.agents]
-     ave = model.datacollector.get_model_vars_dataframe()
-     ave.drop(columns=['disruptiveTend','Learning Students'])
-     #x = sum(agent_maths)
-     N = len(agent_maths)
-     #B = x/N
-     hist = np.histogram(ave, bins=self.bins)[0]
-     return [int(x) for x in hist]
+        agent_maths = [agent.Start_maths for agent in model.schedule.agents]
+        ave = model.datacollector.get_model_vars_dataframe()
+        ave.drop(columns=['disruptiveTend', 'Learning Students'])
+        # x = sum(agent_maths)
+        N = len(agent_maths)
+        # B = x/N
+        hist = np.histogram(ave, bins=self.bins)[0]
+        return [int(x) for x in hist]
 
 
-class TeacherMonitorElement(RightPanelElement):
+class chartStyling(TextElement):
     def __init__(self):
         pass
 
-    def render(self, model):
-        return f"""
-        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<h4 style="margin-top:0">Model Variables</h4>
-<table>
-    <tr><td style="padding: 5px;" </td><p dir="rtl" lang="ar" style="color:#e0e0e0;font-size:20px;">رَبٍّ زِدْنٍي عِلمًا</p><td style="padding: 5px;">{model.learning:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Learning Students معلم:</td><td style="padding: 5px;">{model.learning:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Disruptive Students:</td><td style="padding: 5px;">{model.distruptive:.2f}</td></tr>
-    <tr><td style="padding: 5px;">Current school day</td><td style="padding: 5px;">{model.schoolDay}</td></tr>
-</table>
-"""
+    def render(self):
+        return """ 
+        <style>
+            body {
+                background-color: #FFFFFF; /* Replace with your desired background color */
+            }
+        </style>
+        """
+
+
 class simElement(TextElement):
 
-
     def __init__(self):
         pass
 
     def render(self, model):
-         agent_maths = [agent.Start_maths for agent in model.schedule.agents]
-         ave = model.datacollector.get_model_vars_dataframe()
-         ave = ave["Average End Math"]
+        return """ 
+        <style>
+            body {
+                background-color: #CCCCCC; /* Grey background color */
+            }
 
-         return "Learning Students: " + str(model.learning)
+        </style>
+        """
 
 
 def simclass_draw(agent):
@@ -84,50 +68,60 @@ def simclass_draw(agent):
     '''
     if agent is None:
         return
-    portrayal = {"Shape": "learning.png", "Layer": 0,  "text":agent.pos}
+    portrayal = {"Shape": "learning.jpg", "Layer": 0, "text": agent.pos}
     type = agent.get_type()
 
     if type == 3:
-        portrayal["Shape"] = "disruptive.png"
-        #portrayal["Color"] = ["red", "red"]
-        #portrayal["stroke_color"] = "#00FF00"
+        portrayal["Shape"] = "disruptive.jpg"
+        # portrayal["Color"] = ["red", "red"]
+        # portrayal["stroke_color"] = "#00FF00"
 
     if type == 2:
-        portrayal["Shape"] = "passive.jpg"
-        #portrayal["Color"] = ["yellow", "yellow"]
-        #portrayal["stroke_color"] = "#00FF00"
+        portrayal["Shape"] = "passive.png"
+        # portrayal["Color"] = ["yellow", "yellow"]
+        # portrayal["stroke_color"] = "#00FF00"
     if type == 1:
-        portrayal["Shape"] = "learning.png"
-        #portrayal["Color"] = ["green", "green"]
-        #portrayal["stroke_color"] = "#000000"
+        portrayal["Shape"] = "learning.jpg"
+        # portrayal["Color"] = ["green", "green"]
+        # portrayal["stroke_color"] = "#000000"
 
     return portrayal
+
+
 def hist(model):
     Average = model.datacollector.get_model_vars_dataframe()
     Average.plot()
 
+
 sim_element = simElement()
 canvas_element = CanvasGrid(simclass_draw, 10, 10, 600, 600)
-sim_chart = ChartModule([{"Label": "Learning Students", "Color": "green"},{"Label": "Distruptive Students", "Color": "red"},{"Label": "Average End Math", "Color": "black"}])
+
+sim_chart = ChartModule(
+    [{"Label": "Learning Students", "Color": "green"}, {"Label": "Distruptive Students", "Color": "red"},
+     {"Label": "Average End Math", "Color": "black"}])
+
 rightChart = RightPanelElement()
+
+# Initialize SimClass instance with initial data
+initial_data = pd.read_csv('OldPIPS-SAMPLE.csv')
+sim_instance = SimClass(initial_data)
 model_params = {
     "height": 10,
     "width": 10,
-    "gamification_element": UserSettableParameter("slider", "gamification element", 5.0 , 0.00, 5.0, 1.0),
-    "control": UserSettableParameter("slider", "Teacher Control", 5.0 , 0.00, 5.0, 1.0),
-    "Seating" : UserSettableParameter("slider", "Change Seats Every Lesson ", 1.0 , 0.00, 1.0, 1.0),
-    "State_Minutes" : UserSettableParameter("slider", "Minutes of Change State ", 5.0 , 1.00, 5.0, 1.0),
-    "Inattentiveness": UserSettableParameter("slider", "Inattentiveness ", 1.0 , 0.00, 1.0, 1.0),
-    "hyper_Impulsive": UserSettableParameter("slider", "Hyperactivity   ", 1.0 , 0.00, 1.0, 1.0),
-    "AttentionSpan": UserSettableParameter("slider", "Attention Span", 5.0 , 0.00, 5.0, 1.0),
-     "Nthreshold": UserSettableParameter("slider", "Disruptive Range  ", 10.0 , 5.0, 15.0, 1.0),
-     "NumberofGroups": UserSettableParameter('choice', 'Number of Groups  ',3,choices=[3,2]),
-     "data" : pd.read_csv('/home/zsrj52/Downloads/SimClass/dataset/OldPIPS-SAMPLE.csv')
-
-
+    "gamification_element": UserSettableParameter("slider", "gamification element", 5.0, 0.00, 5.0, 1.0),
+    "teacher_level": UserSettableParameter("slider", "Teacher Level", 5.0, 0.00, 5.0, 1.0),
+    "Seating": UserSettableParameter("slider", "Change Seats Every Lesson ", 1.0, 0.00, 1.0, 1.0),
+    "State_Minutes": UserSettableParameter("slider", "Minutes of Change State ", 5.0, 1.00, 5.0, 1.0),
+    "Inattentiveness": UserSettableParameter("slider", "Inattentiveness ", 1.0, 0.00, 1.0, 1.0),
+    "hyper_Impulsive": UserSettableParameter("slider", "Hyperactivity   ", 1.0, 0.00, 1.0, 1.0),
+    "AttentionSpan": UserSettableParameter("slider", "Attention Span", 5.0, 0.00, 5.0, 1.0),
+    "Nthreshold": UserSettableParameter("slider", "Disruptive Range  ", 10.0, 5.0, 15.0, 1.0),
+    "NumberofGroups": UserSettableParameter('choice', 'Number of Groups  ', 3, choices=[3, 2]),
+    "data": sim_instance.data,  # Pass the initial data
 }
 
 histogram = HistogramModule(list(range(10)), 200, 500)
+
 server = ModularServer(SimClass,
-                       [rightChart,canvas_element, sim_element,sim_chart],
+                       [rightChart, sim_element, canvas_element, sim_chart, chartStyling],
                        "SimClass", model_params)

@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Results Visualizing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body>
+<!-- Second row with empty cards to the right -->
+<div class="row mx-1 my-4 px-3">
+    <div class="col-md-4 mb-3 pr-md-3"> <!-- Added pr-md-3 for right padding -->
+        <div class="card" style="width: 30rem;">
+            <div class="card-body">
+                <h5 style="font-size: 19px; font-weight: 600; text-align: center;">Gender Distribution</h5>
+                <canvas id="myChart"></canvas> <!-- Replaced with the first chart -->
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 pr-md-3"> <!-- Added pr-md-3 for right padding -->
+        <div class="card" style="width: 30rem;">
+            <div class="card-body">
+                <h5 style="font-size: 19px; font-weight: 600; text-align: center;">Percentage of disruptive during
+                    lessons per week</h5>
+                <canvas id="disruptiveChart"></canvas> <!-- Replaced with the second chart -->
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 pr-md-3"> <!-- Added pr-md-3 for right padding -->
+        <div class="card" style="width: 30rem;">
+            <div class="card-body">
+                <h5 style="font-size: 19px; font-weight: 600; text-align: center;">Regression Plot</h5>
+                <canvas id="regressionPlot"></canvas> <!-- Replaced with the third chart -->
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+<!-- Second row with empty cards to the right -->
+<div class="row mx-1 my-4 px-3">
+    <div class="col-md-4 mb-3 pr-md-3"> <!-- Added pr-md-3 for right padding -->
+        <div class="card" style="width: 30rem;">
+            <div class="card-body">
+                <h5 style="font-size: 19px; font-weight: 600; text-align: center;">Chart Template </h5>
+                <canvas id="chart1"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 pr-md-3"> <!-- Added pr-md-3 for right padding -->
+        <div class="card" style="width: 30rem;">
+            <div class="card-body">
+                <h5 style="font-size: 19px; font-weight: 600; text-align: center;">Chart Template</h5>
+                <canvas id="chart2"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 pr-md-3"> <!-- Added pr-md-3 for right padding -->
+        <div class="card" style="width: 30rem;">
+            <div class="card-body">
+                <h5 style="font-size: 19px; font-weight: 600; text-align: center;">Chart Template</h5>
+                <canvas id="chart3"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+        integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+        crossorigin="anonymous"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+<script>
+    // Load CSV data
+    Papa.parse("/static/OldPIPS-SAMPLE.csv", {
+        download: true,
+        complete: function (results) {
+            if (results.errors.length > 0) {
+                // Handle parsing errors
+                console.error("Parsing errors:", results.errors);
+            } else {
+                const data = results.data;
+                let maleCount = 0;
+                let femaleCount = 0;
+
+                // Count males and females
+                for (let i = 1; i < data.length; i++) {
+                    if (data[i][1] === 'M') {
+                        maleCount++;
+                    } else if (data[i][1] === 'F') {
+                        femaleCount++;
+                    }
+                }
+
+                // Update the chart
+                const ctx = document.getElementById('myChart');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Male', 'Female'],
+                        datasets: [{
+                            barPercentage: 4,
+                            barThickness: 70,
+                            data: [maleCount, femaleCount],
+                            backgroundColor: ['#0078d0', 'rgb(255, 99, 123)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 10,
+                                top: 10,
+                                bottom: 0
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        indexAxis: 'x', // Display bars horizontally
+                        elements: {
+                            bar: {
+                                barThickness: 1 // Adjust width of the bars
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+    // Load CSV data for the regression plot
+    Papa.parse("/static/all-linearRegrission-9FEATURE.csv", {
+        download: true,
+        complete: function (results) {
+            const data = results.data.slice(1); // Remove header row
+            const uniqueData = []; // Array to store unique data points
+            const regressionData = data.map(row => ({x: parseFloat(row[6]), y: parseFloat(row[7])}));
+
+            // Filter out duplicate points
+            regressionData.forEach(point => {
+                if (!uniqueData.some(p => p.x === point.x && p.y === point.y)) {
+                    uniqueData.push(point);
+                }
+            });
+
+            // Calculate linear regression
+            const calculateRegression = (data) => {
+                const xValues = data.map(d => d.x);
+                const yValues = data.map(d => d.y);
+                const xMean = xValues.reduce((acc, val) => acc + val, 0) / xValues.length;
+                const yMean = yValues.reduce((acc, val) => acc + val, 0) / yValues.length;
+
+                const numerator = xValues.reduce((acc, val, i) => acc + (val - xMean) * (yValues[i] - yMean), 0);
+                const denominator = xValues.reduce((acc, val) => acc + Math.pow(val - xMean, 2), 0);
+
+                const slope = numerator / denominator;
+                const intercept = yMean - slope * xMean;
+
+                return {slope, intercept};
+            };
+
+            // Calculate linear regression
+            const validData = uniqueData.filter(point => !isNaN(point.x) && !isNaN(point.y));
+
+            const regressionLine = calculateRegression(validData);
+
+            // Log regression data for debugging
+            console.log('Regression Data:', validData);
+            console.log('Slope:', regressionLine.slope);
+            console.log('Intercept:', regressionLine.intercept);
+
+            // Render the regression plot
+            const ctx = document.getElementById('regressionPlot').getContext('2d');
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Data Points',
+                            data: uniqueData,
+                            borderColor: 'blue',
+                            backgroundColor: 'blue',
+                            pointRadius: 5,
+                            showLine: false
+                        },
+                        {
+                            label: 'Regression Line',
+                            data: [
+                                {
+                                    x: Math.min(...validData.map(d => d.x)),
+                                    y: regressionLine.slope * Math.min(...validData.map(d => d.x)) + regressionLine.intercept
+                                },
+                                {
+                                    x: Math.max(...validData.map(d => d.x)),
+                                    y: regressionLine.slope * Math.max(...validData.map(d => d.x)) + regressionLine.intercept
+                                }
+                            ],
+                            borderColor: 'red',
+                            backgroundColor: 'red',
+                            fill: false,
+                            showLine: true
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {title: {display: true, text: 'Start_maths'}},
+                        y: {title: {display: true, text: 'Start_Reading'}}
+                    }
+                }
+            });
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Dummy data for the percentage of disruptive behavior during lessons per week
+        const weeks = [...Array(10).keys()].map(x => x + 1);
+        const disruptivePercentage = [10, 12, 8, 15, 13, 11, 9, 14, 16, 12];
+
+        // Get canvas element
+        const ctx = document.getElementById('disruptiveChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: weeks,
+                datasets: [{
+                    label: 'Percentage of Disruptive Behavior',
+                    data: disruptivePercentage,
+                    borderColor: 'blue',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Week'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Percentage'
+                        }
+                    }
+                }
+            }
+        });
+    });
+    // Parse the CSV data using PapaParse
+    Papa.parse("/static/all-linearRegrission-9FEATURE.csv", {
+        download: true,
+        complete: function (results) {
+            // Extract the data from the parsed results
+            const data = results.data;
+
+            // Extract the relevant columns (learning rate and number of steps)
+            const learningRate = [];
+            const numberOfSteps = [];
+
+            for (let i = 1; i < data.length; i++) {
+                const rate = parseFloat(data[i][14]);
+                const steps = parseInt(data[i][0]);
+
+                // Check for NaN values and remove them
+                if (!isNaN(rate) && !isNaN(steps)) {
+                    learningRate.push(rate);
+                    numberOfSteps.push(steps);
+                }
+            }
+
+            // Combine learning rate and number of steps into pairs
+            const points = learningRate.map((rate, index) => ({x: numberOfSteps[index], y: rate}));
+
+            // Remove duplicated points based on number of steps
+            const uniquePoints = [];
+            const existingSteps = new Set();
+            points.forEach(point => {
+                if (!existingSteps.has(point.x)) {
+                    uniquePoints.push(point);
+                    existingSteps.add(point.x);
+                }
+            });
+
+            // Prepare data for plotting
+            const plotData = {
+                datasets: [{
+                    label: 'Learning Rate vs Number of Steps',
+                    data: uniquePoints,
+                    borderColor: 'blue',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'blue',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: false
+                }]
+            };
+
+            // Get the canvas element
+            const ctx = document.getElementById('learningRate').getContext('2d');
+
+            // Create the scatter plot
+            new Chart(ctx, {
+                type: 'bar',
+                data: plotData,
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Number of Steps',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            min: Math.min(...numberOfSteps),  // Set minimum value for number of steps axis
+                            max: Math.max(...numberOfSteps) + 20 // Set maximum value for number of steps axis
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Learning Rate',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            min: Math.min(...learningRate),  // Set minimum value for learning rate axis
+                            max: Math.max(...learningRate) + 20 // Set maximum value for learning rate axis
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+</script>
+</body>
+</html>
