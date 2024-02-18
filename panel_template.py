@@ -58,7 +58,9 @@ class RightPanelElement(VisualizationElement):
             <div id="container">
                 <label for="fileInput" id="fileInputLabel" class="button-71" role="button">Upload Dataset</label>
                 <input type="file" id="fileInput" accept=".csv" style="display: none;">
-                <button class="button-71" id="generateDatasetBtn" role="button">Generate Dataset</button>
+                    <input type="text" class="form-control input-inline" id="input1" placeholder="Highly disruptive students">
+                    <input type="text" class="form-control input-inline" id="input2" placeholder="Moderately disruptive students">      
+                    <button class="button-71 type="button" id="generateDatasetBtn">Generate Dataset</button>
                 <button id="show-results-btn" class="button-71" role="button">Show Results</button>
             </div>
         """
@@ -93,7 +95,7 @@ class RightPanelElement(VisualizationElement):
 
                 const flaskHostname = '127.0.0.1';
                 const flaskPort = '5000';
-                
+
                 function sendDataToBackend(jsonData) {
                     const uploadURL = `http://${flaskHostname}:${flaskPort}/upload`; // Construct the complete URL
                     fetch(uploadURL, {
@@ -116,19 +118,29 @@ class RightPanelElement(VisualizationElement):
                         console.error('Error:', error);
                     });
                 }
-
-                
-                // Define the processDataset function
-                function processDataset() {
-                    // Send an HTTP GET request to the Flask server to generate the dataset
-                    fetch(`http://${flaskHostname}:${flaskPort}/generate_dataset`)
+                // Add event listener to the "Generate Dataset" button
+                const generateDatasetBtn = document.getElementById('generateDatasetBtn');
+                generateDatasetBtn.addEventListener('click', generateDataset);
+                        // Define the function to make an HTTP GET request to Flask
+                function generateDataset() {
+                    // Get the values of the input fields
+                    const input1Value = document.getElementById('input1').value;
+                    const input2Value = document.getElementById('input2').value;
+        
+                    // Check if any of the input fields are empty
+                    if (input1Value.trim() === '' || input2Value.trim() === '') {
+                        alert('Please fill in both input fields');
+                        return; // Exit the function if any input field is empty
+                    }
+        
+                    // Send an HTTP GET request to Flask with input values
+                    fetch(`http://127.0.0.1:5000/generate_dataset?input1=${input1Value}&input2=${input2Value}`)
                         .then(response => {
                             if (!response.ok) {
                                 // If the response status is not OK (200-299), throw an error
                                 throw new Error(`HTTP error! Status: ${response.status}`);
                             }
-                            // No need to parse JSON since the server does not return any data
-                            // Display alert here
+                            // Alert user that dataset was generated successfully
                             alert('Dataset generated successfully!');
                         })
                         .catch(error => {
@@ -137,10 +149,6 @@ class RightPanelElement(VisualizationElement):
                             alert('Error generating dataset');
                         });
                 }
-                
-                // Add event listener to the "Generate Dataset" button
-                const generateDatasetBtn = document.getElementById('generateDatasetBtn');
-                generateDatasetBtn.addEventListener('click', processDataset);
 
                 document.getElementById("show-results-btn").addEventListener("click", function() {
                     window.open("http://127.0.0.1:5000/show_results", "_blank");
@@ -152,10 +160,8 @@ class RightPanelElement(VisualizationElement):
                 var buttonPanel = document.getElementById('button-panel');
                 if (window.scrollY > 140) {  // Adjust 140 to the desired scroll position
                     container.style.visibility = 'visible';
-                   
                 } else {
                     container.style.visibility = 'hidden';
-              
                 }
             });
         </script>

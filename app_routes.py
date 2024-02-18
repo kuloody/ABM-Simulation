@@ -18,9 +18,13 @@ CORS(app)
 initial_data = pd.read_csv('OldPIPS-SAMPLE.csv')
 sim_instance = SimClass(initial_data)
 
-def generateDataset():
+def generateDataset(input1_value,input2_value):
+    num_highly = int(input1_value)
+
+    num_moderately = int(input2_value)
+
     # Read the content of 'dataset.csv' and put it in a dataframe
-    df = pd.read_csv('dataset.csv')
+    df = pd.read_csv('dataset.csv', low_memory=False)
 
     # Replace '#NULL!' with NaN
     df = df.replace('#NULL!', np.nan)
@@ -29,31 +33,41 @@ def generateDataset():
     df = df.dropna()
 
     # Convert relevant columns to numeric types
-    numeric_cols = ['Inattentiveness', 'Hyperactivity', 'Impulsiveness']
+    numeric_cols = ['Inattentiveness', 'Hyperactivity', 'Impulsiveness', 'Class']
     df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
 
     # Apply conditions for highly disruptive and moderately disruptive rows
     highly_disruptive = df[(df['Inattentiveness'] > 4) | (df['Hyperactivity'] > 3) | (df['Impulsiveness'] > 0)]
     moderately_disruptive = df[(df['Inattentiveness'] >= 3) | (df['Hyperactivity'] > 1)]
 
-    # Concatenate the highly disruptive and moderately disruptive rows
-    filtered_df = pd.concat([highly_disruptive, moderately_disruptive])
+    # Create subset for rows that are neither highly nor moderately disruptive
+    neither_disruptive = df[~df.index.isin(highly_disruptive.index) & ~df.index.isin(moderately_disruptive.index)]
 
-    # Set a seed for the random number generator based on the current time
-    np.random.seed(int(time.time()))
+    # Sample rows from each subset based on input parameters
+    highly_subset = highly_disruptive.sample(n=min(num_highly, len(highly_disruptive)))
+    moderately_subset = moderately_disruptive.sample(n=min(num_moderately, len(moderately_disruptive)))
+    neither_subset = neither_disruptive.sample(n=30 - len(highly_subset) - len(moderately_subset))
 
-    # Generate a new random subset of 30 rows from the filtered DataFrame
-    random_subset = filtered_df.sample(n=30)
+    # Concatenate the subsets
+    final_subset = pd.concat([highly_subset, moderately_subset, neither_subset])
+
+    # Shuffle the final subset
+    final_subset = final_subset.sample(frac=1).reset_index(drop=True)
 
     # Write the output to a new file named 'generated.csv'
-    random_subset.to_csv('generated.csv', index=False)
+    final_subset.to_csv('generated.csv', index=False)
 
 
 @app.route('/generate_dataset')
 def generate_dataset():
     try:
-        # Call the function to generate the dataset
-        generateDataset()
+        # Get the values of the input fields from the query parameters
+        input1_value = request.args.get('input1')
+        input2_value = request.args.get('input2')
+
+        # Call the function to generate the dataset with the input values
+        generateDataset(input1_value, input2_value)
+
         # Trigger a popup alert indicating success using JavaScript
         alert_script = "<script>alert('Dataset generated successfully!');</script>"
         df = pd.read_csv('generated.csv')
